@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Open-source crypto wallet inspired by TrustWallet",
 };
 
+import Navigation from "./components/Navigation";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +29,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <Navigation selected={"Home"} />
+        <main className="ml-0 md:ml-56 pb-16 md:pb-0 min-h-screen">
+          {children}
+        </main>
       </body>
     </html>
   );
