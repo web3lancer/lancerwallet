@@ -1,5 +1,5 @@
 "use client";
-import { Canvas } from '@react-three-fiber';
+import { Canvas } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import Skeleton from '../components/Skeleton';
@@ -67,7 +67,7 @@ export default function WalletsPageClient() {
           transition={{ duration: animationsEnabled ? 0.3 : 0.01 }}
           style={{ maxWidth: 400, margin: '0 auto' }}
         >
-          <Skeleton height={120} style={{ borderRadius: 20, marginBottom: 24 }} />
+          <Skeleton height={120} className="rounded-2xl mb-6" />
         </motion.div>
       ) : (
         <motion.div
