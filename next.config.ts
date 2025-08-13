@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Project: LancerWallet
+  // Add custom Next.js config options here as needed
 };
 
 export default nextConfig;
