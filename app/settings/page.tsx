@@ -1,11 +1,5 @@
-import Skeleton from "../components/Skeleton";
+import SettingsPageClient from './pageClient';
 
 export default function SettingsPage() {
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Settings</h2>
-      <Skeleton height={40} className="mb-4" />
-      <Skeleton height={80} />
-    </div>
-  );
+  return <SettingsPageClient />;
 }
