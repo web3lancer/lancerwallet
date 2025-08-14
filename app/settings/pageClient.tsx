@@ -469,7 +469,7 @@ export default function SettingsPageClient() {
                🔍 Secret Phrase
              </h3>
              <p className="text-base text-secondary mb-6">
-               This is your wallet's recovery phrase. Never share it with anyone. Anyone with access can control your funds.
+               This is your wallet’s recovery phrase. Never share it with anyone. Anyone with access can control your funds.
              </p>
              <div className="p-4 mb-6 rounded-md" style={{ background: 'rgba(255, 152, 0, 0.1)', border: '1px solid rgba(255, 152, 0, 0.2)' }}>
                <p className="text-sm font-medium" style={{ color: 'var(--warning)' }}>
