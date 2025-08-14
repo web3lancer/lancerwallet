@@ -15,6 +15,9 @@ export default function Navigation() {
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const pathname = usePathname();
 
+  // Hide navigation entirely on landing page (/)
+  if (pathname === "/") return null;
+
   return isMobile ? (
     <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 flex justify-between px-4 py-2 z-50">
       {navItems.map((item) => (
