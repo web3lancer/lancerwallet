@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getWalletsFromStorage } from '../../lib/wallet';
 
 interface DeFiProtocol {
   id: string;
@@ -9,28 +10,84 @@ interface DeFiProtocol {
   tvl: number;
   apy: number;
   category: 'lending' | 'dex' | 'yield' | 'staking';
-  userPosition?: {
-    deposited: number;
-    earned: number;
-    apr: number;
-  };
-}
-
-interface UserPosition {
-  protocol: string;
-  type: string;
-  amount: number;
-  value: number;
-  rewards: number;
-  apy: number;
+  website: string;
 }
 
 export default function DeFiPageClient() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showPositionsOnly, setShowPositionsOnly] = useState(false);
+  const [wallets, setWallets] = useState<any[]>([]);
 
-  // Mock DeFi protocols data
+  useEffect(() => {
+    const loadWallets = () => {
+      const storedWallets = getWalletsFromStorage();
+      setWallets(storedWallets);
+    };
+    loadWallets();
+  }, []);
+
+  // Real DeFi protocols (static data, could be fetched from DeFiPulse API)
   const protocols: DeFiProtocol[] = [
+    {
+      id: 'uniswap',
+      name: 'Uniswap V3',
+      description: 'Decentralized exchange and automated market maker',
+      icon: '🦄',
+      tvl: 6500000000,
+      apy: 12.5,
+      category: 'dex',
+      website: 'https://app.uniswap.org'
+    },
+    {
+      id: 'aave',
+      name: 'Aave',
+      description: 'Decentralized lending and borrowing protocol',
+      icon: '👻',
+      tvl: 11200000000,
+      apy: 8.2,
+      category: 'lending',
+      website: 'https://app.aave.com'
+    },
+    {
+      id: 'compound',
+      name: 'Compound',
+      description: 'Algorithmic money markets protocol',
+      icon: '🏛️',
+      tvl: 3200000000,
+      apy: 6.8,
+      category: 'lending',
+      website: 'https://app.compound.finance'
+    },
+    {
+      id: 'yearn',
+      name: 'Yearn Finance',
+      description: 'Yield optimization strategies',
+      icon: '🔵',
+      tvl: 850000000,
+      apy: 15.3,
+      category: 'yield',
+      website: 'https://yearn.finance'
+    },
+    {
+      id: 'lido',
+      name: 'Lido',
+      description: 'Liquid staking for Ethereum 2.0',
+      icon: '🌊',
+      tvl: 32000000000,
+      apy: 4.5,
+      category: 'staking',
+      website: 'https://lido.fi'
+    },
+    {
+      id: 'curve',
+      name: 'Curve Finance',
+      description: 'Exchange liquidity pool for stablecoins',
+      icon: '📈',
+      tvl: 4800000000,
+      apy: 9.7,
+      category: 'dex',
+      website: 'https://curve.fi'
+    }
+  ];
     {
       id: 'uniswap',
       name: 'Uniswap V3',
