@@ -64,7 +64,7 @@ export default function Onboarding() {
             <p className="mb-4 text-sm text-gray-600">This is the only way to recover your wallet. Keep it private and offline.</p>
             <div className="bg-gray-100 p-4 rounded mb-4 whitespace-pre-wrap">{mnemonic}</div>
             <div className="flex gap-4">
-              <button onClick={proceedToVerify} className="bg-purple-600 text-white px-4 py-2 rounded">I've saved it</button>
+              <button onClick={proceedToVerify} className="bg-purple-600 text-white px-4 py-2 rounded">I&apos;ve saved it</button>
               <button onClick={() => setStep(0)} className="border px-4 py-2 rounded">Cancel</button>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function Onboarding() {
         {step === 3 && (
           <div>
             <h3 className="text-xl font-semibold mb-2">Finalizing</h3>
-            <p className="mb-4 text-sm text-gray-600">Well derive your wallet address now.</p>
+            <p className="mb-4 text-sm text-gray-600">We&apos;ll derive your wallet address now.</p>
             <div className="flex gap-4">
               <button onClick={complete} className="bg-purple-600 text-white px-4 py-2 rounded">Generate wallet</button>
             </div>
