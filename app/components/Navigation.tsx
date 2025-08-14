@@ -6,7 +6,6 @@ import Link from 'next/link';
 
 const navItems = [
   { name: "Home", icon: "🏠", href: "/home", description: "Main dashboard with portfolio overview" },
-  { name: "Wallets", icon: "👛", href: "/wallets", description: "Manage multiple wallets and accounts" },
   { name: "NFT", icon: "🖼️", href: "/nft", description: "View and manage NFTs" },
   { name: "DeFi", icon: "🌐", href: "/defi", description: "Decentralized finance protocols" },
   { name: "Settings", icon: "⚙️", href: "/settings", description: "App settings and preferences" },
