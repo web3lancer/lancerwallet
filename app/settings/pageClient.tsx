@@ -71,7 +71,10 @@ export default function SettingsPageClient() {
   ]);
 
   const [activeSection, setActiveSection] = useState<string>('general');
-  const [showResetModal, setShowResetModal] = useState(false);
+   const [showResetModal, setShowResetModal] = useState(false);
+   const [showRevealModal, setShowRevealModal] = useState(false);
+   const [mnemonic, setMnemonic] = useState<string | null>(null);
+
 
   const toggleSetting = (id: string) => {
     setSettings(prev => prev.map(setting => 
@@ -243,34 +246,41 @@ export default function SettingsPageClient() {
 
               <div className="card">
                 <h3 className="text-lg font-semibold text-primary mb-4">Backup & Recovery</h3>
-                <div className="space-y-4">
-                  <button 
-                    className="btn-secondary"
-                    onClick={handleBackup}
-                    style={{ width: '100%' }}
-                  >
-                    💾 Backup Wallet
-                  </button>
-                  <button 
-                    className="btn-secondary"
-                    onClick={handleRestore}
-                    style={{ width: '100%' }}
-                  >
-                    📥 Restore from Backup
-                  </button>
-                  <button 
-                    className="btn-secondary"
-                    style={{ 
-                      width: '100%',
-                      background: 'rgba(244, 67, 54, 0.1)',
-                      borderColor: 'rgba(244, 67, 54, 0.2)',
-                      color: 'var(--error)'
-                    }}
-                    onClick={() => setShowResetModal(true)}
-                  >
-                    🗑️ Reset Wallet
-                  </button>
-                </div>
+                 <div className="space-y-4">
+                   <button 
+                     className="btn-secondary"
+                     onClick={handleBackup}
+                     style={{ width: '100%' }}
+                   >
+                     💾 Backup Wallet
+                   </button>
+                   <button 
+                     className="btn-secondary"
+                     onClick={handleRestore}
+                     style={{ width: '100%' }}
+                   >
+                     📥 Restore from Backup
+                   </button>
+                   <button 
+                     className="btn-secondary"
+                     onClick={() => setShowRevealModal(true)}
+                     style={{ width: '100%' }}
+                   >
+                     🔍 Reveal Secret Phrase
+                   </button>
+                   <button 
+                     className="btn-secondary"
+                     style={{ 
+                       width: '100%',
+                       background: 'rgba(244, 67, 54, 0.1)',
+                       borderColor: 'rgba(244, 67, 54, 0.2)',
+                       color: 'var(--error)'
+                     }}
+                     onClick={() => setShowResetModal(true)}
+                   >
+                     🗑️ Reset Wallet
+                   </button>
+                 </div>
               </div>
             </div>
           )}
