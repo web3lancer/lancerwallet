@@ -7,7 +7,7 @@ export default function Header() {
         <Logo size={36} />
       </div>
       <div>
-        <a href="/home" className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-purple-700">Enter App</a>
+        <a href="/onboarding" className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-purple-700">Enter App</a>
       </div>
     </header>
   );
