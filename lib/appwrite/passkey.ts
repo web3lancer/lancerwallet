@@ -34,7 +34,7 @@ function base64urlToBuffer(base64url: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-async function fetchJson(url: string, body?: any) {
+async function fetchJson(url: string, body?: Record<string, unknown>) {
   const res = await fetch(url, {
     method: body ? 'POST' : 'GET',
     headers: { 'Content-Type': 'application/json' },
@@ -50,13 +50,13 @@ export async function requestRegistrationOptions(displayName = 'Lancer User') {
   // convert base64url strings back to ArrayBuffers for navigator
   // expected fields: challenge, user.id, maybe excludeCredentials[].id
   if (data.publicKey) {
-    const pk = data.publicKey as any;
-    pk.challenge = base64urlToBuffer(pk.challenge);
-    if (pk.user && typeof pk.user.id === 'string') pk.user.id = base64urlToBuffer(pk.user.id);
-    if (Array.isArray(pk.excludeCredentials)) {
-      pk.excludeCredentials = pk.excludeCredentials.map((c: any) => ({ ...c, id: base64urlToBuffer(c.id) }));
-    }
-    return pk as PublicKeyCredentialCreationOptions;
+const pk = data.publicKey as PublicKeyCredentialCreationOptions;
+pk.challenge = base64urlToBuffer(pk.challenge as unknown as string);
+if (pk.user && typeof pk.user.id === 'string') pk.user.id = base64urlToBuffer(pk.user.id as unknown as string);
+if (Array.isArray(pk.excludeCredentials)) {
+  pk.excludeCredentials = pk.excludeCredentials.map((c: PublicKeyCredentialDescriptor) => ({ ...c, id: base64urlToBuffer(c.id as unknown as string) }));
+}
+return pk;
   }
   throw new Error('Invalid registration options from server');
 }
@@ -78,21 +78,22 @@ export async function finalizeRegistration(attestation: PublicKeyCredential) {
 export async function requestAuthenticationOptions() {
   const data = await fetchJson('/api/auth/webauthn/authentication-options');
   if (data.publicKey) {
-    const pk = data.publicKey as any;
-    pk.challenge = base64urlToBuffer(pk.challenge);
-    if (Array.isArray(pk.allowCredentials)) {
-      pk.allowCredentials = pk.allowCredentials.map((c: any) => ({ ...c, id: base64urlToBuffer(c.id) }));
-    }
-    return pk as PublicKeyCredentialRequestOptions;
+const pk = data.publicKey as PublicKeyCredentialRequestOptions;
+pk.challenge = base64urlToBuffer(pk.challenge as unknown as string);
+if (Array.isArray(pk.allowCredentials)) {
+  pk.allowCredentials = pk.allowCredentials.map((c: PublicKeyCredentialDescriptor) => ({ ...c, id: base64urlToBuffer(c.id as unknown as string) }));
+}
+return pk;
   }
   throw new Error('Invalid authentication options from server');
 }
 
 export async function finalizeAuthentication(assertion: PublicKeyCredential) {
   const clientDataJSON = bufferToBase64url(assertion.response.clientDataJSON);
-  const authenticatorData = bufferToBase64url((assertion.response as any).authenticatorData);
-  const signature = bufferToBase64url((assertion.response as any).signature);
-  const userHandle = (assertion.response as any).userHandle ? bufferToBase64url((assertion.response as any).userHandle) : null;
+  const resp = assertion.response as AuthenticatorAssertionResponse;
+  const authenticatorData = bufferToBase64url(resp.authenticatorData);
+  const signature = bufferToBase64url(resp.signature);
+  const userHandle = resp.userHandle ? bufferToBase64url(resp.userHandle) : null;
   const payload = {
     id: assertion.id,
     rawId: bufferToBase64url(assertion.rawId),

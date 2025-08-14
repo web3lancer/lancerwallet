@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       counter: (verification.registrationInfo?.counter as number) || 0,
       userId: body.response.userHandle || 'user:' + (Math.random().toString(36).slice(2, 8)),
     };
-    saveCredential(cred as any);
+    saveCredential(cred as Record<string, unknown>);
 
     // TODO: create Appwrite user and mint custom token
     const token = `custom-passkey-${cred.userId}`;

@@ -10,8 +10,8 @@ export function detectInjectedProviders(): Web3ProviderInfo[] {
   const providers: Web3ProviderInfo[] = [];
   if (typeof window === 'undefined') return providers;
   // Basic injected provider detection
-  const anyWindow = window as any;
-  if (anyWindow.ethereum) {
+  const win = window as Window & { ethereum?: import('ethers').Eip1193Provider };
+  if (win.ethereum) {
     // metaMask, etc.
     providers.push({ name: 'Injected', id: 'injected', available: true });
   } else {
@@ -22,18 +22,16 @@ export function detectInjectedProviders(): Web3ProviderInfo[] {
 
 export async function requestSignature(_address: string, message: string): Promise<string> {
   if (typeof window === 'undefined') throw new Error('Must be used in browser');
-  const anyWindow = window as any;
-  if (!anyWindow.ethereum) throw new Error('No injected provider');
-  const provider = new (ethers as any).providers.Web3Provider(anyWindow.ethereum);
+  const win = window as Window & { ethereum?: import('ethers').Eip1193Provider };
+  if (!win.ethereum) throw new Error('No injected provider');
+  const provider = new ethers.BrowserProvider(win.ethereum);
   await provider.send('eth_requestAccounts', []);
   const signer = provider.getSigner();
-  const sig = await signer.signMessage(message);
+  const sig = await (await signer).signMessage(message);
   return sig;
 }
 
 export function recoverAddress(message: string, signature: string) {
   // ethers may have different exports depending on build; access utils dynamically
-  const utils = (ethers as any).utils || (ethers as any).ethers?.utils;
-  if (!utils) throw new Error('ethers.utils not available');
-  return utils.verifyMessage(message, signature);
+  return ethers.verifyMessage(message, signature);
 }

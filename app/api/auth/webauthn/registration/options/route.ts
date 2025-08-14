@@ -8,7 +8,7 @@ export async function GET() {
   const options = generateRegistrationOptions({
     rpName,
     rpID,
-    userID: cryptoRandomId(),
+    userID: new TextEncoder().encode(cryptoRandomId()),
     userName: 'user',
     attestationType: 'none',
     authenticatorSelection: { userVerification: 'preferred' },
