@@ -19,8 +19,8 @@ export default function useTheme() {
   const apply = useCallback((t: Theme) => {
     const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
     const effective = t === "system" ? (prefersDark ? "dark" : "light") : t;
-    if (effective === "dark") document.documentElement.classList.add("theme-dark");
-    else document.documentElement.classList.remove("theme-dark");
+    if (effective === "dark") document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
   }, []);
 
   useEffect(() => {

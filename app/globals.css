@@ -19,8 +19,8 @@
   }
 }
 
-/* class-based dark theme (for manual override) */
-.theme-dark {
+/* class-based dark theme (for manual override) - keep for compatibility */
+.theme-dark, .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
 }
