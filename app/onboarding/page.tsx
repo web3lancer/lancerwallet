@@ -35,12 +35,12 @@ export default function Onboarding() {
 
   const restore = () => {
     try {
-      if (!bip39.validateMnemonic(inputMnemonic)) throw new Error('Invalid mnemonic');
+      if (!bip39.validateMnemonic(inputMnemonic)) throw new Error("Invalid mnemonic");
       const wallet = Wallet.fromPhrase(inputMnemonic);
       setRestoredAddress(wallet.address);
       setStep(11);
     } catch (err) {
-      alert('Invalid mnemonic');
+      alert("Invalid mnemonic");
     }
   };
 
@@ -85,7 +85,7 @@ export default function Onboarding() {
         {step === 3 && (
           <div>
             <h3 className="text-xl font-semibold mb-2">Finalizing</h3>
-            <p className="mb-4 text-sm text-gray-600">We'll derive your wallet address now.</p>
+            <p className="mb-4 text-sm text-gray-600">Well derive your wallet address now.</p>
             <div className="flex gap-4">
               <button onClick={complete} className="bg-purple-600 text-white px-4 py-2 rounded">Generate wallet</button>
             </div>
