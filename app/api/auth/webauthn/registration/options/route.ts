@@ -11,6 +11,7 @@ export async function GET() {
     userID: cryptoRandomId(),
     userName: 'user',
     attestationType: 'none',
+    authenticatorSelection: { userVerification: 'preferred' },
   });
   return NextResponse.json(options);
 }
