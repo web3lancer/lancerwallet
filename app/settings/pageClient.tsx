@@ -115,11 +115,23 @@ export default function SettingsPageClient() {
     alert('Restore functionality would be implemented here');
   };
 
-  const handleReset = () => {
-    setShowResetModal(false);
-    // Mock reset functionality
-    alert('Wallet reset functionality would be implemented here');
-  };
+   const handleLogout = () => {
+     // Clear wallet/account data (mnemonic, session, etc.)
+     localStorage.removeItem('mnemonic');
+     localStorage.removeItem('wallet');
+     localStorage.removeItem('session');
+     // Redirect to onboarding
+     window.location.href = '/onboarding';
+   };
+
+   const handleReset = () => {
+     setShowResetModal(false);
+     // Clear all wallet/account data
+     localStorage.clear();
+     // Redirect to onboarding
+     window.location.href = '/onboarding';
+   };
+
 
   return (
     <div className="container fade-in" style={{ paddingBottom: 'var(--space-20)' }}>
@@ -263,6 +275,44 @@ export default function SettingsPageClient() {
                      style={{ width: '100%' }}
                    >
                      💾 Backup Wallet
+                   </button>
+                   <button 
+                     className="btn-secondary"
+                     onClick={handleRestore}
+                     style={{ width: '100%' }}
+                   >
+                     📥 Restore from Backup
+                   </button>
+                   <button 
+                     className="btn-secondary"
+                     onClick={() => setShowRevealModal(true)}
+                     style={{ width: '100%' }}
+                   >
+                     🔍 Reveal Secret Phrase
+                   </button>
+                   <button 
+                     className="btn-secondary"
+                     style={{ 
+                       width: '100%',
+                       background: 'rgba(244, 67, 54, 0.1)',
+                       borderColor: 'rgba(244, 67, 54, 0.2)',
+                       color: 'var(--error)'
+                     }}
+                     onClick={handleLogout}
+                   >
+                     🚪 Log Out
+                   </button>
+                   <button 
+                     className="btn-secondary"
+                     style={{ 
+                       width: '100%',
+                       background: 'rgba(244, 67, 54, 0.1)',
+                       borderColor: 'rgba(244, 67, 54, 0.2)',
+                       color: 'var(--error)'
+                     }}
+                     onClick={() => setShowResetModal(true)}
+                   >
+                     🗑️ Reset Wallet
                    </button>
                    <button 
                      className="btn-secondary"
