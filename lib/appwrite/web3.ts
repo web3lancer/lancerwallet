@@ -20,11 +20,11 @@ export function detectInjectedProviders(): Web3ProviderInfo[] {
   return providers;
 }
 
-export async function requestSignature(address: string, message: string): Promise<string> {
+export async function requestSignature(_address: string, message: string): Promise<string> {
   if (typeof window === 'undefined') throw new Error('Must be used in browser');
   const anyWindow = window as any;
   if (!anyWindow.ethereum) throw new Error('No injected provider');
-  const provider = new ethers.providers.Web3Provider(anyWindow.ethereum);
+  const provider = new (ethers as any).providers.Web3Provider(anyWindow.ethereum);
   await provider.send('eth_requestAccounts', []);
   const signer = provider.getSigner();
   const sig = await signer.signMessage(message);
@@ -32,5 +32,8 @@ export async function requestSignature(address: string, message: string): Promis
 }
 
 export function recoverAddress(message: string, signature: string) {
-  return ethers.utils.verifyMessage(message, signature);
+  // ethers may have different exports depending on build; access utils dynamically
+  const utils = (ethers as any).utils || (ethers as any).ethers?.utils;
+  if (!utils) throw new Error('ethers.utils not available');
+  return utils.verifyMessage(message, signature);
 }

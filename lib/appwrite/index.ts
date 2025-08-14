@@ -1,4 +1,4 @@
-import { Client, Users } from 'appwrite';
+import { Client, Account } from 'appwrite';
 
 const endpoint = process.env.APPWRITE_ENDPOINT as string;
 const project = process.env.APPWRITE_PROJECT as string;
@@ -10,11 +10,14 @@ if (!endpoint || !project || !apiKey) {
 }
 
 const client = new Client();
-client
-  .setEndpoint(endpoint || 'https://example.com/v1')
-  .setProject(project || '')
-  .setKey(apiKey || '');
+client.setEndpoint(endpoint || 'https://example.com/v1').setProject(project || '');
+
+// Note: setKey is only available server-side via SDK version; if not available, callers should set key per-request.
+if (apiKey) {
+  // @ts-ignore - some SDK versions expose setKey
+  client.setKey?.(apiKey);
+}
 
 export const appwriteClient = client;
-export const appwriteUsers = new Users(client);
+export const appwriteAccount = new Account(client);
 export default client;
