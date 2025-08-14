@@ -10,8 +10,8 @@ Expectations:
 This file provides helper wrappers to call those endpoints and to convert ArrayBuffer <-> base64url which is required for WebAuthn.
 */
 
-export type RegistrationOptionsResponse = any;
-export type AuthenticationOptionsResponse = any;
+export type RegistrationOptionsResponse = unknown;
+export type AuthenticationOptionsResponse = unknown;
 
 function bufferToBase64url(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
