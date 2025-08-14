@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { recoverAddress } from '../../../../lib/appwrite/web3';
-import { appwriteClient } from '../../../../lib/appwrite/index';
+import { recoverAddress } from '../../../../../lib/appwrite/web3';
+import { verifyAndConsumeNonce } from '../../nonce/store';
+import { appwriteClient } from '../../../../../lib/appwrite/index';
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { address, signature, nonce } = body;
-  if (!address || !signature || !nonce) return NextResponse.json({ error: 'missing fields' }, { status: 400 });
+  const { address, signature, key, nonce } = body;
+  if (!address || !signature || !nonce || !key) return NextResponse.json({ error: 'missing fields' }, { status: 400 });
 
   // Recreate message format expected (simple: `Sign this nonce: ${nonce}`)
   const message = `Sign this nonce: ${nonce}`;
@@ -20,12 +21,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'signature does not match address' }, { status: 400 });
   }
 
-  // TODO: verify nonce server-side; for now accept
+  const ok = verifyAndConsumeNonce(key, nonce);
+  if (!ok) return NextResponse.json({ error: 'invalid or expired nonce' }, { status: 400 });
 
   // Mint Appwrite custom token using server SDK key
   try {
-    // Appwrite's SDK requires calling a server endpoint to create sessions; alternatively use custom JWT creation if configured
-    // Here we'll return a placeholder token for client to exchange with Appwrite
+    // If APPWRITE_API_KEY is configured, use server SDK to create a JWT or custom token; for now return a placeholder
     const customToken = `custom-token-for-${address.toLowerCase()}`;
     return NextResponse.json({ token: customToken });
   } catch (err) {

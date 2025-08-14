@@ -1,0 +1,20 @@
+import { NextResponse } from 'next/server';
+import { generateRegistrationOptions } from '@simplewebauthn/server';
+
+const rpName = process.env.WEBAUTHN_RP_NAME || 'LancerWallet';
+const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
+
+export async function GET() {
+  const options = generateRegistrationOptions({
+    rpName,
+    rpID,
+    userID: cryptoRandomId(),
+    userName: 'user',
+    attestationType: 'none',
+  });
+  return NextResponse.json(options);
+}
+
+function cryptoRandomId() {
+  return Math.random().toString(36).substring(2, 12);
+}
