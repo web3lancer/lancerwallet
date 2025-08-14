@@ -1,7 +1,5 @@
 "use client";
 import React, { useState } from 'react';
-import * as bip39 from 'bip39';
-import { Wallet } from 'ethers';
 import Link from 'next/link';
 
 export default function Onboarding() {
@@ -10,8 +8,9 @@ export default function Onboarding() {
   const [restoredAddress, setRestoredAddress] = useState<string | null>(null);
   const [inputMnemonic, setInputMnemonic] = useState('');
 
-  const startCreate = () => {
-    const m = bip39.generateMnemonic(256); // 24 words
+  const startCreate = async () => {
+    const { generateMnemonic } = await import('bip39');
+    const m = generateMnemonic(256); // 24 words
     setMnemonic(m);
     setStep(1);
   };
@@ -23,9 +22,14 @@ export default function Onboarding() {
     else alert('Seed phrase does not match.');
   };
 
-  const complete = () => {
-    // derive a wallet address using ethers from mnemonic
-    const wallet = Wallet.fromPhrase(mnemonic);
+  const complete = async () => {
+    // derive a wallet address using ethers from mnemonic (lazy-loaded)
+    const { Wallet } = await import('ethers');
+    // ethers' Wallet may be a namespace; use bracket access to avoid any cast
+    // dynamic import typing mismatch - access defensive
+    const walletAny = (Wallet as unknown) as { fromPhrase?: (m: string) => { address: string }; Wallet?: { fromPhrase: (m: string) => { address: string } } };
+    const wallet = walletAny?.fromPhrase ? walletAny.fromPhrase(mnemonic) : walletAny?.Wallet ? walletAny.Wallet.fromPhrase(mnemonic) : null;
+    if (!wallet) throw new Error('Could not derive wallet');
     // In a real app you'd persist keys securely (e.g., encrypted storage)
     setRestoredAddress(wallet.address);
     setStep(4);
@@ -33,13 +37,20 @@ export default function Onboarding() {
 
   const startRestore = () => setStep(10);
 
-  const restore = () => {
+  const restore = async () => {
     try {
-      if (!bip39.validateMnemonic(inputMnemonic)) throw new Error("Invalid mnemonic");
-      const wallet = Wallet.fromPhrase(inputMnemonic);
+      const { validateMnemonic } = await import('bip39');
+      const { Wallet } = await import('ethers');
+      if (!validateMnemonic(inputMnemonic)) throw new Error("Invalid mnemonic");
+      // dynamic import typing mismatch - access defensive
+const walletAny = (Wallet as unknown) as { fromPhrase?: (m: string) => { address: string }; Wallet?: { fromPhrase: (m: string) => { address: string } } };
+      const wallet = walletAny?.fromPhrase ? walletAny.fromPhrase(inputMnemonic) : walletAny?.Wallet ? walletAny.Wallet.fromPhrase(inputMnemonic) : null;
+      if (!wallet) throw new Error('Could not derive wallet');
       setRestoredAddress(wallet.address);
       setStep(11);
     } catch (err) {
+      // keep simple UX-level feedback and log for debug
+      console.warn('restore mnemonic error', err);
       alert("Invalid mnemonic");
     }
   };
