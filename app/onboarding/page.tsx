@@ -1,13 +1,12 @@
 "use client";
 import React, { useState } from 'react';
 import * as bip39 from 'bip39';
-import { ethers } from 'ethers';
+import { Wallet } from 'ethers';
 import Link from 'next/link';
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [mnemonic, setMnemonic] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
   const [restoredAddress, setRestoredAddress] = useState<string | null>(null);
   const [inputMnemonic, setInputMnemonic] = useState('');
 
@@ -20,13 +19,13 @@ export default function Onboarding() {
   const proceedToVerify = () => setStep(2);
 
   const verify = (value: string) => {
-    setConfirmed(value.trim() === mnemonic.trim());
     if (value.trim() === mnemonic.trim()) setStep(3);
+    else alert('Seed phrase does not match.');
   };
 
   const complete = () => {
     // derive a wallet address using ethers from mnemonic
-    const wallet = ethers.Wallet.fromMnemonic(mnemonic);
+    const wallet = Wallet.fromPhrase(mnemonic);
     // In a real app you'd persist keys securely (e.g., encrypted storage)
     setRestoredAddress(wallet.address);
     setStep(4);
@@ -37,7 +36,7 @@ export default function Onboarding() {
   const restore = () => {
     try {
       if (!bip39.validateMnemonic(inputMnemonic)) throw new Error('Invalid mnemonic');
-      const wallet = ethers.Wallet.fromMnemonic(inputMnemonic);
+      const wallet = Wallet.fromPhrase(inputMnemonic);
       setRestoredAddress(wallet.address);
       setStep(11);
     } catch (err) {
