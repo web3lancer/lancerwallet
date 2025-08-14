@@ -30,7 +30,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navigation />
-        <main className={"pb-16 md:pb-0 min-h-screen" + (typeof window !== 'undefined' && window.location.pathname !== '/' ? ' md:ml-56' : '')}>
+        <main 
+          className="min-h-screen"
+          style={{
+            marginLeft: typeof window !== 'undefined' && window.location.pathname !== '/' ? '240px' : '0',
+            paddingBottom: '80px',
+            padding: 'var(--space-6)',
+            background: 'var(--bg-primary)'
+          }}
+        >
           {children}
         </main>
       </body>
