@@ -1,94 +1,422 @@
 "use client";
-import { Canvas } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 import Skeleton from '../components/Skeleton';
-import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-function WalletCard3D({ theme }: { theme: 'light' | 'dark' }) {
-  // 3D wallet card mesh
-  return (
-    <mesh position={[0, 0, 0]} castShadow receiveShadow>
-      <boxGeometry args={[2.8, 1.6, 0.18]} />
-      <meshStandardMaterial
-        color={theme === 'dark' ? '#7C5AFF' : '#B8A394'}
-        metalness={0.7}
-        roughness={0.3}
-      />
-      {/* Overlay wallet info in 3D */}
-      <Html center style={{ width: '90%', height: '90%' }}>
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            color: theme === 'dark' ? '#FAF7F4' : '#2D1B15',
-            fontWeight: 600,
-            fontSize: 20,
-            textShadow: '0 2px 8px rgba(45,27,21,0.15)',
-          }}
-        >
-          <span>Wallet Name</span>
-          <span style={{ fontSize: 14, opacity: 0.7 }}>0x1234...abcd</span>
-          <span style={{ fontSize: 24, marginTop: 8 }}>$12,345.67</span>
-        </div>
-      </Html>
-    </mesh>
-  );
+interface Wallet {
+  id: string;
+  name: string;
+  address: string;
+  balance: number;
+  balanceUSD: number;
+  network: string;
+  type: 'imported' | 'generated';
+  lastUsed: string;
+  tokens: Array<{
+    symbol: string;
+    name: string;
+    balance: number;
+    valueUSD: number;
+    icon: string;
+  }>;
 }
 
 export default function WalletsPageClient() {
-  // Simulate loading state
-  const [loading, setLoading] = useState(true);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  useEffect(() => {
-    // Simulate loading for 1s
-    const timer = setTimeout(() => setLoading(false), 1000);
-    // Read theme/animation from localStorage or system
-    const storedTheme = localStorage.getItem('lancerwallet-theme');
-    if (storedTheme === 'dark' || storedTheme === 'light') setTheme(storedTheme);
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setAnimationsEnabled(!reducedMotion);
-    return () => clearTimeout(timer);
-  }, []);
+  // Mock wallet data
+  const wallets: Wallet[] = [
+    {
+      id: '1',
+      name: 'Main Wallet',
+      address: '0x1234567890abcdef1234567890abcdef12345678',
+      balance: 2.45,
+      balanceUSD: 8420.50,
+      network: 'Ethereum',
+      type: 'generated',
+      lastUsed: '2 hours ago',
+      tokens: [
+        { symbol: 'ETH', name: 'Ethereum', balance: 2.45, valueUSD: 8420.50, icon: '⟠' },
+        { symbol: 'USDC', name: 'USD Coin', balance: 1500.00, valueUSD: 1500.00, icon: '💵' },
+        { symbol: 'UNI', name: 'Uniswap', balance: 145.20, valueUSD: 726.00, icon: '🦄' }
+      ]
+    },
+    {
+      id: '2',
+      name: 'Trading Wallet',
+      address: '0xabcdef1234567890abcdef1234567890abcdef12',
+      balance: 0.85,
+      balanceUSD: 2923.75,
+      network: 'Ethereum',
+      type: 'imported',
+      lastUsed: '1 day ago',
+      tokens: [
+        { symbol: 'ETH', name: 'Ethereum', balance: 0.85, valueUSD: 2923.75, icon: '⟠' },
+        { symbol: 'WBTC', name: 'Wrapped Bitcoin', balance: 0.012, valueUSD: 520.00, icon: '₿' }
+      ]
+    },
+    {
+      id: '3',
+      name: 'DeFi Wallet',
+      address: '0x567890abcdef1234567890abcdef1234567890ab',
+      balance: 1.20,
+      balanceUSD: 4128.00,
+      network: 'Ethereum',
+      type: 'generated',
+      lastUsed: '3 days ago',
+      tokens: [
+        { symbol: 'ETH', name: 'Ethereum', balance: 1.20, valueUSD: 4128.00, icon: '⟠' },
+        { symbol: 'AAVE', name: 'Aave', balance: 25.50, valueUSD: 2040.00, icon: '👻' }
+      ]
+    }
+  ];
+
+  const totalPortfolioValue = wallets.reduce((sum, wallet) => sum + wallet.balanceUSD, 0);
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
 
   return (
-    <div className="p-6" style={{ minHeight: '100vh', background: theme === 'dark' ? '#2D1B15' : '#FAF7F4' }}>
-      <h2 className="text-2xl font-bold mb-8" style={{ color: theme === 'dark' ? '#FAF7F4' : '#2D1B15' }}>Wallets</h2>
-      {loading ? (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: animationsEnabled ? 0.3 : 0.01 }}
-          style={{ maxWidth: 400, margin: '0 auto' }}
+    <div className="container fade-in" style={{ paddingBottom: 'var(--space-20)' }}>
+      {/* Header */}
+      <header className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            My Wallets
+          </h1>
+          <p className="text-base text-secondary">
+            Manage your crypto wallets and view balances
+          </p>
+        </div>
+        <button 
+          className="btn-primary"
+          onClick={() => setShowCreateModal(true)}
         >
-          <Skeleton height={120} className="rounded-2xl mb-6" />
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: animationsEnabled ? 0.3 : 0.01 }}
-          style={{ maxWidth: 400, margin: '0 auto', boxShadow: '0 10px 20px rgba(45,27,21,0.19), 0 6px 6px rgba(45,27,21,0.23)' }}
-        >
-          <Canvas
-            style={{ width: '100%', height: 220, borderRadius: 20, background: theme === 'dark' ? '#1F1611' : '#FFFFFF' }}
-            shadows
-            camera={{ position: [0, 0, 5], fov: 50 }}
+          ➕ Add Wallet
+        </button>
+      </header>
+
+      {/* Portfolio Summary */}
+      <div className="card-wallet mb-8" style={{ position: 'relative', overflow: 'hidden' }}>
+        <div 
+          style={{
+            position: 'absolute',
+            top: '-20%',
+            right: '-10%',
+            width: '60%',
+            height: '140%',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '50%',
+            pointerEvents: 'none'
+          }}
+        />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <p className="text-sm mb-1" style={{ opacity: 0.8 }}>
+                Total Portfolio Value
+              </p>
+              <h2 className="text-4xl font-bold" style={{ letterSpacing: '-0.5px' }}>
+                {formatCurrency(totalPortfolioValue)}
+              </h2>
+              <p className="text-sm mt-2" style={{ opacity: 0.9 }}>
+                Across {wallets.length} wallets
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm mb-1" style={{ opacity: 0.8 }}>
+                24h Change
+              </div>
+              <div 
+                className="text-lg font-semibold px-3 py-1 rounded-md"
+                style={{
+                  background: 'rgba(76, 175, 80, 0.2)',
+                  color: 'var(--success)'
+                }}
+              >
+                +$127.50 (+0.8%)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Wallets Grid */}
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold text-primary mb-4">
+          Your Wallets
+        </h2>
+        
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton-card" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {wallets.map((wallet) => (
+              <div
+                key={wallet.id}
+                className="card"
+                style={{
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-normal) ease-in-out',
+                  border: selectedWallet === wallet.id ? '2px solid var(--purple-500)' : '1px solid var(--border-default)'
+                }}
+                onClick={() => setSelectedWallet(selectedWallet === wallet.id ? null : wallet.id)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-3)';
+                }}
+              >
+                {/* Wallet Header */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: 'var(--radius-lg)',
+                        background: wallet.type === 'generated' 
+                          ? 'linear-gradient(135deg, var(--purple-500), var(--purple-600))'
+                          : 'linear-gradient(135deg, var(--brown-500), var(--brown-600))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text-inverse)',
+                        fontSize: '1.2rem',
+                        fontWeight: 'var(--font-weight-semibold)'
+                      }}
+                    >
+                      {wallet.type === 'generated' ? '🔐' : '📥'}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-primary">
+                        {wallet.name}
+                      </h3>
+                      <p className="text-sm text-secondary font-mono">
+                        {formatAddress(wallet.address)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-semibold text-primary">
+                      {formatCurrency(wallet.balanceUSD)}
+                    </p>
+                    <p className="text-sm text-secondary">
+                      {wallet.balance.toFixed(4)} ETH
+                    </p>
+                  </div>
+                </div>
+
+                {/* Network Badge */}
+                <div className="flex justify-between items-center mb-4">
+                  <span 
+                    className="px-3 py-1 rounded-md text-sm font-medium"
+                    style={{
+                      background: 'rgba(33, 150, 243, 0.1)',
+                      color: 'var(--info)',
+                      border: '1px solid rgba(33, 150, 243, 0.2)'
+                    }}
+                  >
+                    {wallet.network}
+                  </span>
+                  <span className="text-xs text-tertiary">
+                    Last used {wallet.lastUsed}
+                  </span>
+                </div>
+
+                {/* Token Summary */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-secondary">
+                    Top Tokens ({wallet.tokens.length})
+                  </p>
+                  <div className="flex gap-2">
+                    {wallet.tokens.slice(0, 3).map((token) => (
+                      <div
+                        key={token.symbol}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-xs"
+                        style={{
+                          background: 'var(--surface-hover)',
+                          border: '1px solid var(--border-default)'
+                        }}
+                      >
+                        <span>{token.icon}</span>
+                        <span className="font-medium">{token.symbol}</span>
+                      </div>
+                    ))}
+                    {wallet.tokens.length > 3 && (
+                      <div 
+                        className="flex items-center justify-center px-2 py-1 rounded-md text-xs font-medium"
+                        style={{
+                          background: 'var(--surface-pressed)',
+                          color: 'var(--text-secondary)'
+                        }}
+                      >
+                        +{wallet.tokens.length - 3}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Expanded Details */}
+                {selectedWallet === wallet.id && (
+                  <div 
+                    className="fade-in mt-4 pt-4"
+                    style={{ borderTop: '1px solid var(--border-default)' }}
+                  >
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-primary">
+                        Token Breakdown
+                      </h4>
+                      {wallet.tokens.map((token) => (
+                        <div
+                          key={token.symbol}
+                          className="flex justify-between items-center p-2 rounded-md"
+                          style={{ background: 'var(--surface-hover)' }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{token.icon}</span>
+                            <div>
+                              <p className="text-sm font-medium text-primary">
+                                {token.symbol}
+                              </p>
+                              <p className="text-xs text-secondary">
+                                {token.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-primary">
+                              {formatCurrency(token.valueUSD)}
+                            </p>
+                            <p className="text-xs text-secondary">
+                              {token.balance.toLocaleString()} {token.symbol}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 mt-4">
+                      <Link href={`/send?wallet=${wallet.id}`} className="btn-primary btn-sm" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
+                        💸 Send
+                      </Link>
+                      <button className="btn-secondary btn-sm" style={{ flex: 1 }}>
+                        📥 Receive
+                      </button>
+                      <button className="btn-ghost btn-sm" style={{ flex: 1 }}>
+                        ⚙️ Settings
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Quick Actions */}
+      <section>
+        <h2 className="text-xl font-semibold text-primary mb-4">
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <button 
+            className="card text-center"
+            onClick={() => setShowCreateModal(true)}
+            style={{
+              cursor: 'pointer',
+              transition: 'all var(--transition-normal) ease-in-out'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-2)';
+            }}
           >
-            <ambientLight intensity={0.7} />
-            <spotLight position={[5, 5, 5]} angle={0.2} penumbra={1} intensity={1.2} castShadow />
-            <WalletCard3D theme={theme} />
-          </Canvas>
-        </motion.div>
+            <div className="text-2xl mb-2">➕</div>
+            <p className="text-sm font-medium text-primary">Add Wallet</p>
+          </button>
+          
+          <Link href="/send" className="card text-center" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="text-2xl mb-2">💸</div>
+            <p className="text-sm font-medium text-primary">Send Crypto</p>
+          </Link>
+          
+          <button className="card text-center" style={{ cursor: 'pointer' }}>
+            <div className="text-2xl mb-2">📊</div>
+            <p className="text-sm font-medium text-primary">Analytics</p>
+          </button>
+          
+          <button className="card text-center" style={{ cursor: 'pointer' }}>
+            <div className="text-2xl mb-2">📱</div>
+            <p className="text-sm font-medium text-primary">Export</p>
+          </button>
+        </div>
+      </section>
+
+      {/* Create Wallet Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-semibold text-primary mb-4">
+              Add New Wallet
+            </h3>
+            <p className="text-base text-secondary mb-6">
+              Choose how you'd like to add a wallet to your account.
+            </p>
+            <div className="space-y-3">
+              <Link 
+                href="/onboarding"
+                className="btn-primary"
+                style={{ 
+                  width: '100%',
+                  textDecoration: 'none',
+                  display: 'block',
+                  textAlign: 'center'
+                }}
+              >
+                🆕 Create New Wallet
+              </Link>
+              <button className="btn-secondary" style={{ width: '100%' }}>
+                📥 Import Existing Wallet
+              </button>
+              <button className="btn-ghost" style={{ width: '100%' }}>
+                🔗 Connect Hardware Wallet
+              </button>
+            </div>
+            <button 
+              className="btn-ghost mt-4"
+              onClick={() => setShowCreateModal(false)}
+              style={{ width: '100%' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
-      {/* Accessibility: ARIA label for wallet card */}
-      <div aria-label="Wallet card" tabIndex={0} style={{ outline: 'none', marginTop: 32 }} />
     </div>
   );
 }
