@@ -1,8 +1,10 @@
 "use client";
 import React from "react";
 import { usePathname } from "next/navigation";
-import Logo from "./Logo";
+
 import Link from 'next/link';
+
+import Logo from "./Logo";
 
 const navItems = [
   { name: "Home", icon: "🏠", href: "/home" },
@@ -23,9 +25,8 @@ export default function Navigation() {
       {/* Mobile bottom nav: visible on small screens, hidden on md+ */}
       <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 flex justify-between px-4 py-2 z-50 md:hidden">
         <div className="flex items-center px-3">
-          <Link href="/" className="flex items-center">
-            <Logo size={36} />
-          </Link>
+            {/* Logo inserted here */}
+            <Link href="/" className="flex items-center"><Logo size={36} /></Link>
         </div>
         <div className="flex gap-4 flex-1 justify-center">
           {navItems.map((item) => (
@@ -45,9 +46,7 @@ export default function Navigation() {
       {/* Desktop aside nav: hidden on small screens, visible on md+ */}
       <aside className="hidden md:flex fixed left-0 top-0 h-full w-56 bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800 flex-col py-8 px-4 z-50">
         <div className="mb-8">
-          <Link href="/" className="flex items-center gap-3" aria-label="Lancer Wallet">
-            <Logo size={44} />
-          </Link>
+            <Link href="/" className="flex items-center gap-3" aria-label="Lancer Wallet" />
         </div>
         {navItems.map((item) => (
           <a
