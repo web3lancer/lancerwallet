@@ -1,5 +1,6 @@
 "use client";
 import Skeleton from "../components/Skeleton";
+import ThemeSelector from "../components/ThemeSelector";
 
 export default function SettingsPageClient() {
   return (
