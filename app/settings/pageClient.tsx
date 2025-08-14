@@ -75,6 +75,16 @@ export default function SettingsPageClient() {
    const [showRevealModal, setShowRevealModal] = useState(false);
    const [mnemonic, setMnemonic] = useState<string | null>(null);
 
+   // Load mnemonic from localStorage when reveal modal opens
+   React.useEffect(() => {
+     if (showRevealModal) {
+       try {
+         const m = localStorage.getItem('mnemonic');
+         setMnemonic(m);
+       } catch {}
+     }
+   }, [showRevealModal]);
+
 
   const toggleSetting = (id: string) => {
     setSettings(prev => prev.map(setting => 
@@ -451,50 +461,77 @@ export default function SettingsPageClient() {
         </main>
       </div>
 
-      {/* Reset Confirmation Modal */}
-      {showResetModal && (
-        <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-semibold text-primary mb-4">
-              ⚠️ Reset Wallet
-            </h3>
-            <p className="text-base text-secondary mb-6">
-              This will permanently delete all wallet data from this device. Make sure you have backed up your seed phrases before proceeding.
-            </p>
-            <div 
-              className="p-4 mb-6 rounded-md"
-              style={{
-                background: 'rgba(244, 67, 54, 0.1)',
-                border: '1px solid rgba(244, 67, 54, 0.2)'
-              }}
-            >
-              <p className="text-sm font-medium" style={{ color: 'var(--error)' }}>
-                This action cannot be undone!
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button 
-                className="btn-secondary"
-                onClick={() => setShowResetModal(false)}
-                style={{ flex: 1 }}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn-primary"
-                onClick={handleReset}
-                style={{ 
-                  flex: 1,
-                  background: 'var(--error)',
-                  borderColor: 'var(--error)'
-                }}
-              >
-                Reset Wallet
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+       {/* Reveal Secret Phrase Modal */}
+       {showRevealModal && (
+         <div className="modal-overlay" onClick={() => setShowRevealModal(false)}>
+           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+             <h3 className="text-xl font-semibold text-primary mb-4">
+               🔍 Secret Phrase
+             </h3>
+             <p className="text-base text-secondary mb-6">
+               This is your wallet's recovery phrase. Never share it with anyone. Anyone with access can control your funds.
+             </p>
+             <div className="p-4 mb-6 rounded-md" style={{ background: 'rgba(255, 152, 0, 0.1)', border: '1px solid rgba(255, 152, 0, 0.2)' }}>
+               <p className="text-sm font-medium" style={{ color: 'var(--warning)' }}>
+                 Write this down and store it securely. Do not take screenshots or store online.
+               </p>
+             </div>
+             <div className="p-6 mb-6" style={{ background: 'var(--surface-hover)', border: '2px solid var(--border-default)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-sm)', lineHeight: '1.8', wordSpacing: '8px', letterSpacing: '0.5px' }}>
+               {mnemonic ? mnemonic : <span className="text-secondary">No secret phrase found on this device.</span>}
+             </div>
+             <div className="flex gap-3">
+               <button className="btn-secondary" onClick={() => setShowRevealModal(false)} style={{ flex: 1 }}>
+                 Close
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+
+       {/* Reset Confirmation Modal */}
+       {showResetModal && (
+         <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+             <h3 className="text-xl font-semibold text-primary mb-4">
+               ⚠️ Reset Wallet
+             </h3>
+             <p className="text-base text-secondary mb-6">
+               This will permanently delete all wallet data from this device. Make sure you have backed up your seed phrases before proceeding.
+             </p>
+             <div 
+               className="p-4 mb-6 rounded-md"
+               style={{
+                 background: 'rgba(244, 67, 54, 0.1)',
+                 border: '1px solid rgba(244, 67, 54, 0.2)'
+               }}
+             >
+               <p className="text-sm font-medium" style={{ color: 'var(--error)' }}>
+                 This action cannot be undone!
+               </p>
+             </div>
+             <div className="flex gap-3">
+               <button 
+                 className="btn-secondary"
+                 onClick={() => setShowResetModal(false)}
+                 style={{ flex: 1 }}
+               >
+                 Cancel
+               </button>
+               <button 
+                 className="btn-primary"
+                 onClick={handleReset}
+                 style={{ 
+                   flex: 1,
+                   background: 'var(--error)',
+                   borderColor: 'var(--error)'
+                 }}
+               >
+                 Reset Wallet
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 }
