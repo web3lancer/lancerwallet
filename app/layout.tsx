@@ -29,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navigation selected={"Home"} />
+        <Navigation />
         <main className="ml-0 md:ml-56 pb-16 md:pb-0 min-h-screen">
           {children}
         </main>

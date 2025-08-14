@@ -1,5 +1,7 @@
+"use client";
 import React from "react";
 import { useMediaQuery } from "react-responsive";
+import { usePathname } from "next/navigation";
 
 const navItems = [
   { name: "Home", icon: "🏠", href: "/" },
@@ -9,8 +11,9 @@ const navItems = [
   { name: "Settings", icon: "⚙️", href: "/settings" },
 ];
 
-export default function Navigation({ selected }: { selected: string }) {
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+export default function Navigation() {
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+  const pathname = usePathname();
 
   return isMobile ? (
     <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 flex justify-between px-4 py-2 z-50">
@@ -18,7 +21,7 @@ export default function Navigation({ selected }: { selected: string }) {
         <a
           key={item.name}
           href={item.href}
-          className={`flex flex-col items-center text-xs ${selected === item.name ? "text-blue-600" : "text-gray-500"}`}
+          className={`flex flex-col items-center text-xs ${pathname === item.href ? "text-blue-600" : "text-gray-500"}`}
         >
           <span className="text-2xl">{item.icon}</span>
           {item.name}
@@ -31,7 +34,7 @@ export default function Navigation({ selected }: { selected: string }) {
         <a
           key={item.name}
           href={item.href}
-          className={`flex items-center gap-3 mb-6 text-base ${selected === item.name ? "text-blue-600 font-bold" : "text-gray-700 dark:text-gray-300"}`}
+          className={`flex items-center gap-3 mb-6 text-base ${pathname === item.href ? "text-blue-600 font-bold" : "text-gray-700 dark:text-gray-300"}`}
         >
           <span className="text-2xl">{item.icon}</span>
           {item.name}
