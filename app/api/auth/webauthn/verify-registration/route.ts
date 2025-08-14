@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     // TODO: create Appwrite user and mint custom token
     const token = `custom-passkey-${cred.userId}`;
     return NextResponse.json({ token });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'invalid attestation' }, { status: 400 });
   }
 }

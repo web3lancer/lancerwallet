@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -17,6 +17,7 @@ interface Wallet {
   name: string;
   address: string;
   tokens: Token[];
+
 }
 
 export default function SendPageClient() {
@@ -33,7 +34,7 @@ export default function SendPageClient() {
   const [step, setStep] = useState<'form' | 'review' | 'sending' | 'success'>('form');
 
   // Mock wallet and token data
-  const wallets: Wallet[] = [
+  const wallets: Wallet[] = useMemo(() => [
     {
       id: '1',
       name: 'Main Wallet',
@@ -53,7 +54,8 @@ export default function SendPageClient() {
         { symbol: 'WBTC', name: 'Wrapped Bitcoin', balance: 0.012, valueUSD: 520.00, icon: '₿', decimals: 8 }
       ]
     }
-  ];
+   ], []);
+
 
   useEffect(() => {
     if (walletId && wallets.find(w => w.id === walletId)) {
@@ -61,7 +63,7 @@ export default function SendPageClient() {
     } else if (wallets.length > 0) {
       setSelectedWallet(wallets[0].id);
     }
-  }, [walletId]);
+  }, [walletId, wallets]);
 
   const currentWallet = wallets.find(w => w.id === selectedWallet);
   const currentToken = currentWallet?.tokens.find(t => t.symbol === selectedToken);

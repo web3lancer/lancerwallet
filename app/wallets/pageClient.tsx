@@ -298,7 +298,7 @@ export default function WalletsPageClient() {
               Add New Wallet
             </h3>
             <p className="text-base text-secondary mb-6">
-              Choose how you'd like to add a wallet to your account.
+              Choose how you&apos;d like to add a wallet to your account.
             </p>
             <div className="space-y-3">
               <Link 

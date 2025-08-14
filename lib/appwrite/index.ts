@@ -14,7 +14,7 @@ client.setEndpoint(endpoint || 'https://example.com/v1').setProject(project || '
 
 // Note: setKey is only available server-side via SDK version; if not available, callers should set key per-request.
 if (apiKey) {
-  // @ts-ignore - some SDK versions expose setKey
+  // @ts-expect-error - some SDK versions expose setKey
   client.setKey?.(apiKey);
 }
 

@@ -10,7 +10,7 @@ export default function useTheme() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw === "light" || raw === "dark" || raw === "system") return raw;
-    } catch (_err) {
+    } catch {
       // ignore localStorage access errors
     }
     return "system";
@@ -27,7 +27,7 @@ export default function useTheme() {
     apply(theme);
     try {
       localStorage.setItem(STORAGE_KEY, theme);
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, [theme, apply]);

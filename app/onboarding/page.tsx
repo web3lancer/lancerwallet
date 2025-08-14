@@ -258,7 +258,7 @@ export default function Onboarding() {
                 className="btn-primary"
                 style={{ flex: 1 }}
               >
-                ✅ I've Saved It Securely
+                ✅ I&apos;ve Saved It Securely
               </button>
               <button 
                 onClick={() => setStep(0)} 
@@ -330,7 +330,7 @@ export default function Onboarding() {
                 🔐
               </div>
               <p className="text-base text-secondary">
-                Perfect! Now we'll derive your wallet address from your verified seed phrase.
+                Perfect! Now we&apos;ll derive your wallet address from your verified seed phrase.
               </p>
             </div>
             

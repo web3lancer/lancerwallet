@@ -64,7 +64,7 @@ return pk;
 export async function finalizeRegistration(attestation: PublicKeyCredential) {
   // Convert ArrayBuffers in attestation to base64url strings and POST to server
   const clientDataJSON = bufferToBase64url(attestation.response.clientDataJSON);
-  const attestationObject = bufferToBase64url((attestation.response as any).attestationObject);
+  const attestationObject = bufferToBase64url((attestation.response as AuthenticatorAttestationResponse).attestationObject);
   const rawId = bufferToBase64url(attestation.rawId);
   const payload = {
     id: attestation.id,

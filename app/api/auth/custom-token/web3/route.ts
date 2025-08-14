@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { recoverAddress } from '../../../../../lib/appwrite/web3';
 import { verifyAndConsumeNonce } from '../../nonce/store';
-import { appwriteClient } from '../../../../../lib/appwrite/index';
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -12,7 +11,7 @@ export async function POST(req: Request) {
   let recovered: string;
   try {
     recovered = recoverAddress(message, signature);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'invalid signature' }, { status: 400 });
   }
 
@@ -31,11 +30,10 @@ export async function POST(req: Request) {
     try {
       // create a server-side client with key
       // appwrite SDK exposes createJWT on Users in some versions; we will call REST fallback
-      const url = `${process.env.APPWRITE_ENDPOINT}/v1/account/sessions/oauth2`; // placeholder
-      // For now return token-like object
+            // For now return token-like object
       const token = `appwrite-token:${address.toLowerCase()}`;
       return NextResponse.json({ token });
-    } catch (err) {
+    } catch {
       return NextResponse.json({ error: 'failed to mint token' }, { status: 500 });
     }
   }
