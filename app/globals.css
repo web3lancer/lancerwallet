@@ -356,7 +356,7 @@ body {
   outline: none;
 }
 
-.input:error {
+.input.input-error {
   border-color: var(--error);
   box-shadow: var(--inner-subtle), 0 0 0 3px rgba(244, 67, 54, 0.1);
 }
