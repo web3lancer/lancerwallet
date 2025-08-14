@@ -4,7 +4,7 @@ import { useMediaQuery } from "react-responsive";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { name: "Home", icon: "🏠", href: "/" },
+  { name: "Home", icon: "🏠", href: "/home" },
   { name: "Wallets", icon: "👛", href: "/wallets" },
   { name: "Send/Receive", icon: "💸", href: "/send" },
   { name: "DeFi", icon: "🌐", href: "/defi" },
