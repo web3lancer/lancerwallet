@@ -2,72 +2,69 @@
 import React from "react";
 
 export default function Logo({ size = 100 }: { size?: number }) {
-  const containerStyle: React.CSSProperties = {
+  const scale = size / 100;
+
+  const container: React.CSSProperties = {
     width: size,
     height: size,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "transparent",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'transparent',
   };
 
-  const shapeSize = Math.round(size * 0.8);
-  const iconSize = Math.round(size * 0.4);
-  const coinSize = Math.round(iconSize * 0.375);
-  const nftSize = coinSize;
-
-  const shapeStyle: React.CSSProperties = {
-    width: shapeSize,
-    height: shapeSize,
-    borderRadius: Math.round(shapeSize * 0.25),
-    background: "linear-gradient(135deg, #e53935 60%, #8e24aa 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 4px 16px rgba(142,36,170,0.10)",
+  const shape: React.CSSProperties = {
+    width: 80 * scale,
+    height: 80 * scale,
+    borderRadius: 20 * scale,
+    background: 'linear-gradient(135deg, #e53935 60%, #8e24aa 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 16px rgba(142,36,170,0.10)',
   };
 
-  const iconStyle: React.CSSProperties = {
-    width: iconSize,
-    height: iconSize,
-    borderRadius: "50%",
-    background: "#fff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
+  const icon: React.CSSProperties = {
+    width: 40 * scale,
+    height: 40 * scale,
+    borderRadius: '50%',
+    background: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   };
 
-  const coinStyle: React.CSSProperties = {
-    position: "absolute",
-    left: Math.round(iconSize * 0.2),
-    top: Math.round(iconSize * 0.3),
-    width: coinSize,
-    height: coinSize,
-    borderRadius: "50%",
-    background: "#e53935",
-    border: "2px solid #8e24aa",
-    boxShadow: "0 1px 4px rgba(229,57,53,0.25)",
+  const coin: React.CSSProperties = {
+    position: 'absolute',
+    left: 8 * scale,
+    top: 12 * scale,
+    width: 15 * scale,
+    height: 15 * scale,
+    borderRadius: '50%',
+    background: '#e53935',
+    border: `${2 * scale}px solid #8e24aa`,
+    boxShadow: '0 1px 4px rgba(229,57,53,0.25)',
   };
 
-  const nftStyle: React.CSSProperties = {
-    position: "absolute",
-    right: Math.round(iconSize * 0.2),
-    bottom: Math.round(iconSize * 0.3),
-    width: nftSize,
-    height: nftSize,
-    borderRadius: Math.round(nftSize * 0.25),
-    background: "#8e24aa",
-    border: "2px solid #e53935",
-    boxShadow: "0 1px 4px rgba(142,36,170,0.18)",
+  const nft: React.CSSProperties = {
+    position: 'absolute',
+    right: 8 * scale,
+    bottom: 12 * scale,
+    width: 15 * scale,
+    height: 15 * scale,
+    borderRadius: 5 * scale,
+    background: '#8e24aa',
+    border: `${2 * scale}px solid #e53935`,
+    boxShadow: '0 1px 4px rgba(142,36,170,0.18)',
   };
 
   return (
-    <div style={containerStyle} aria-hidden>
-      <div style={shapeStyle}>
-        <div style={iconStyle}>
-          <div style={coinStyle} />
-          <div style={nftStyle} />
+    <div style={container} aria-hidden>
+      <div style={shape}>
+        <div style={icon}>
+          <div style={coin} />
+          <div style={nft} />
         </div>
       </div>
     </div>
