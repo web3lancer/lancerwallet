@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Logo from '../components/Logo';
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
@@ -58,6 +59,9 @@ const walletAny = (Wallet as unknown) as { fromPhrase?: (m: string) => { address
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="max-w-2xl w-full bg-white dark:bg-gray-900 rounded-2xl shadow p-8">
+        <div className="flex justify-center mb-6">
+          <Logo size={72} />
+        </div>
         {step === 0 && (
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Welcome to LancerWallet</h2>
