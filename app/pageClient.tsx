@@ -1,216 +1,306 @@
 "use client";
 import Skeleton from "./components/Skeleton";
+import Link from "next/link";
 
 export default function HomeClient() {
+  // Mock data for realistic content
+  const portfolioData = {
+    totalValue: 12847.50,
+    change24h: 2.4,
+    walletCount: 3,
+    activePositions: 8
+  };
+
+  const recentTransactions = [
+    { id: 1, type: 'send', amount: '-0.5 ETH', to: '0x1234...5678', time: '2 hours ago', status: 'completed' },
+    { id: 2, type: 'receive', amount: '+1,250 USDC', from: '0x8765...4321', time: '5 hours ago', status: 'completed' },
+    { id: 3, type: 'swap', amount: '0.25 BTC → 8.2 ETH', time: '1 day ago', status: 'completed' },
+  ];
+
+  const quickActions = [
+    {
+      icon: '👛',
+      title: 'My Wallets',
+      description: `${portfolioData.walletCount} active wallets`,
+      href: '/wallets',
+      variant: 'primary'
+    },
+    {
+      icon: '💸',
+      title: 'Send & Receive',
+      description: 'Transfer cryptocurrency',
+      href: '/send',
+      variant: 'secondary'
+    },
+    {
+      icon: '🌐',
+      title: 'DeFi Hub',
+      description: `${portfolioData.activePositions} active positions`,
+      href: '/defi',
+      variant: 'secondary'
+    },
+    {
+      icon: '📊',
+      title: 'Analytics',
+      description: 'Portfolio insights',
+      href: '/analytics',
+      variant: 'secondary'
+    }
+  ];
+
   return (
     <div 
-      className="fade-in"
+      className="fade-in container"
       style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: 'var(--space-6)'
+        paddingBottom: 'var(--space-20)' // Extra space for mobile bottom nav
       }}
     >
       {/* Page Header */}
-      <div style={{ marginBottom: 'var(--space-8)' }}>
-        <h1 
-          style={{
-            fontSize: '32px',
-            lineHeight: '44px',
-            letterSpacing: '-1px',
-            fontWeight: '700',
-            color: 'var(--text-primary)',
-            marginBottom: 'var(--space-2)'
-          }}
-        >
-          Welcome back
-        </h1>
-        <p 
-          style={{
-            fontSize: '16px',
-            lineHeight: '24px',
-            color: 'var(--text-secondary)'
-          }}
-        >
-          Manage your digital assets with security and simplicity
-        </p>
-      </div>
+      <header style={{ marginBottom: 'var(--space-8)' }}>
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-primary mb-2">
+              Welcome back
+            </h1>
+            <p className="text-base text-secondary">
+              Manage your digital assets with security and simplicity
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button 
+              className="btn-ghost btn-sm"
+              style={{ padding: 'var(--space-2)' }}
+              aria-label="Notifications"
+            >
+              🔔
+            </button>
+            <button 
+              className="btn-ghost btn-sm"
+              style={{ padding: 'var(--space-2)' }}
+              aria-label="Settings"
+            >
+              ⚙️
+            </button>
+          </div>
+        </div>
+      </header>
 
       {/* Portfolio Overview Card */}
       <div 
-        className="card"
+        className="card-wallet"
         style={{
-          background: 'linear-gradient(135deg, var(--purple-500), var(--purple-700))',
-          color: 'var(--text-inverse)',
-          border: 'none',
-          marginBottom: 'var(--space-6)'
+          marginBottom: 'var(--space-8)',
+          position: 'relative',
+          overflow: 'hidden'
         }}
       >
-        <div className="flex justify-between items-start mb-4">
+        {/* Background pattern overlay */}
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '50%',
+            height: '100%',
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '50%',
+            transform: 'translateX(25%) translateY(-25%)',
+            pointerEvents: 'none'
+          }}
+        />
+        
+        <div className="flex justify-between items-start mb-6" style={{ position: 'relative', zIndex: 1 }}>
           <div>
-            <p style={{ fontSize: '14px', opacity: 0.8, marginBottom: 'var(--space-1)' }}>
+            <p className="text-sm mb-1" style={{ opacity: 0.8 }}>
               Total Portfolio Value
             </p>
-            <h2 
-              style={{
-                fontSize: '32px',
-                fontWeight: '700',
-                letterSpacing: '-0.5px'
-              }}
-            >
-              $12,847.50
+            <h2 className="text-4xl font-bold" style={{ letterSpacing: '-0.5px' }}>
+              ${portfolioData.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </h2>
-          </div>
-          <div 
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: 'var(--radius-md)',
-              padding: 'var(--space-2) var(--space-3)',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-          >
-            +2.4%
+            <div className="flex items-center gap-2 mt-2">
+              <span 
+                className={`text-sm font-medium px-2 py-1 rounded-md ${
+                  portfolioData.change24h >= 0 ? 'status-success' : 'status-error'
+                }`}
+                style={{
+                  background: portfolioData.change24h >= 0 
+                    ? 'rgba(76, 175, 80, 0.2)' 
+                    : 'rgba(244, 67, 54, 0.2)',
+                  color: portfolioData.change24h >= 0 ? 'var(--success)' : 'var(--error)'
+                }}
+              >
+                {portfolioData.change24h >= 0 ? '+' : ''}{portfolioData.change24h}% (24h)
+              </span>
+            </div>
           </div>
         </div>
-        <div className="flex gap-4">
+        
+        <div className="flex gap-3" style={{ position: 'relative', zIndex: 1 }}>
+          <Link href="/send" className="btn-secondary" style={{
+            background: 'rgba(255, 255, 255, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: 'var(--text-inverse)',
+            flex: 1,
+            textAlign: 'center',
+            textDecoration: 'none'
+          }}>
+            💸 Send
+          </Link>
           <button 
             className="btn-secondary"
             style={{
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.15)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               color: 'var(--text-inverse)',
               flex: 1
             }}
           >
-            Send
+            📥 Receive
           </button>
-          <button 
-            className="btn-secondary"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              color: 'var(--text-inverse)',
-              flex: 1
-            }}
-          >
-            Receive
-          </button>
+          <Link href="/defi" className="btn-secondary" style={{
+            background: 'rgba(255, 255, 255, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: 'var(--text-inverse)',
+            flex: 1,
+            textAlign: 'center',
+            textDecoration: 'none'
+          }}>
+            🌐 DeFi
+          </Link>
         </div>
       </div>
 
       {/* Quick Actions Grid */}
-      <div 
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 'var(--space-4)',
-          marginBottom: 'var(--space-8)'
-        }}
-      >
-        <div className="card">
-          <div style={{ marginBottom: 'var(--space-3)' }}>
-            <span style={{ fontSize: '24px' }}>👛</span>
-          </div>
-          <h3 
-            style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              color: 'var(--text-primary)',
-              marginBottom: 'var(--space-1)'
-            }}
-          >
-            My Wallets
-          </h3>
-          <p 
-            style={{
-              fontSize: '14px',
-              color: 'var(--text-secondary)',
-              marginBottom: 'var(--space-4)'
-            }}
-          >
-            Manage your crypto wallets
-          </p>
-          <button className="btn-primary" style={{ width: '100%' }}>
-            View Wallets
-          </button>
+      <section style={{ marginBottom: 'var(--space-8)' }}>
+        <h2 className="text-xl font-semibold text-primary mb-4">
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {quickActions.map((action, index) => (
+            <Link
+              key={index}
+              href={action.href}
+              className="card"
+              style={{
+                textDecoration: 'none',
+                color: 'inherit',
+                transition: 'all var(--transition-normal) ease-in-out'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-3)';
+              }}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div 
+                  style={{
+                    fontSize: '2rem',
+                    marginBottom: 'var(--space-3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: 'var(--radius-lg)',
+                    background: action.variant === 'primary' 
+                      ? 'rgba(124, 90, 255, 0.1)' 
+                      : 'var(--surface-hover)'
+                  }}
+                >
+                  {action.icon}
+                </div>
+                <h3 className="text-base font-semibold text-primary mb-1">
+                  {action.title}
+                </h3>
+                <p className="text-sm text-secondary">
+                  {action.description}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
-
-        <div className="card">
-          <div style={{ marginBottom: 'var(--space-3)' }}>
-            <span style={{ fontSize: '24px' }}>🌐</span>
-          </div>
-          <h3 
-            style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              color: 'var(--text-primary)',
-              marginBottom: 'var(--space-1)'
-            }}
-          >
-            DeFi Hub
-          </h3>
-          <p 
-            style={{
-              fontSize: '14px',
-              color: 'var(--text-secondary)',
-              marginBottom: 'var(--space-4)'
-            }}
-          >
-            Access DeFi protocols
-          </p>
-          <button className="btn-secondary" style={{ width: '100%' }}>
-            Explore DeFi
-          </button>
-        </div>
-
-        <div className="card">
-          <div style={{ marginBottom: 'var(--space-3)' }}>
-            <span style={{ fontSize: '24px' }}>📊</span>
-          </div>
-          <h3 
-            style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              color: 'var(--text-primary)',
-              marginBottom: 'var(--space-1)'
-            }}
-          >
-            Analytics
-          </h3>
-          <p 
-            style={{
-              fontSize: '14px',
-              color: 'var(--text-secondary)',
-              marginBottom: 'var(--space-4)'
-            }}
-          >
-            Track your performance
-          </p>
-          <button className="btn-secondary" style={{ width: '100%' }}>
-            View Stats
-          </button>
-        </div>
-      </div>
+      </section>
 
       {/* Recent Activity */}
-      <div className="card">
-        <h3 
-          style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            color: 'var(--text-primary)',
-            marginBottom: 'var(--space-4)'
-          }}
-        >
-          Recent Activity
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <Skeleton height={60} />
-          <Skeleton height={60} />
-          <Skeleton height={60} />
+      <section className="card">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-primary">
+            Recent Activity
+          </h2>
+          <Link 
+            href="/activity" 
+            className="text-sm font-medium"
+            style={{ 
+              color: 'var(--purple-500)',
+              textDecoration: 'none'
+            }}
+          >
+            View All
+          </Link>
         </div>
-      </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          {recentTransactions.map((tx) => (
+            <div
+              key={tx.id}
+              className="flex items-center justify-between p-3"
+              style={{
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--surface-hover)',
+                border: '1px solid var(--border-default)'
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div 
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: 'var(--radius-full)',
+                    background: tx.type === 'send' ? 'rgba(244, 67, 54, 0.1)' 
+                              : tx.type === 'receive' ? 'rgba(76, 175, 80, 0.1)'
+                              : 'rgba(124, 90, 255, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem'
+                  }}
+                >
+                  {tx.type === 'send' ? '📤' : tx.type === 'receive' ? '📥' : '🔄'}
+                </div>
+                <div>
+                  <p className="text-base font-medium text-primary">
+                    {tx.amount}
+                  </p>
+                  <p className="text-sm text-secondary">
+                    {tx.type === 'send' ? `To ${tx.to}` 
+                     : tx.type === 'receive' ? `From ${tx.from}`
+                     : 'Token Swap'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div 
+                  className="text-xs px-2 py-1 rounded-md"
+                  style={{
+                    background: 'rgba(76, 175, 80, 0.1)',
+                    color: 'var(--success)',
+                    marginBottom: 'var(--space-1)'
+                  }}
+                >
+                  {tx.status}
+                </div>
+                <p className="text-xs text-tertiary">
+                  {tx.time}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
