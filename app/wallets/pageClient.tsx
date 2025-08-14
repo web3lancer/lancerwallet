@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from 'react';
-import Skeleton from '../components/Skeleton';
 import Link from 'next/link';
 
 interface Wallet {
@@ -22,7 +21,6 @@ interface Wallet {
 }
 
 export default function WalletsPageClient() {
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -55,20 +53,6 @@ export default function WalletsPageClient() {
       tokens: [
         { symbol: 'ETH', name: 'Ethereum', balance: 0.85, valueUSD: 2923.75, icon: '⟠' },
         { symbol: 'WBTC', name: 'Wrapped Bitcoin', balance: 0.012, valueUSD: 520.00, icon: '₿' }
-      ]
-    },
-    {
-      id: '3',
-      name: 'DeFi Wallet',
-      address: '0x567890abcdef1234567890abcdef1234567890ab',
-      balance: 1.20,
-      balanceUSD: 4128.00,
-      network: 'Ethereum',
-      type: 'generated',
-      lastUsed: '3 days ago',
-      tokens: [
-        { symbol: 'ETH', name: 'Ethereum', balance: 1.20, valueUSD: 4128.00, icon: '⟠' },
-        { symbol: 'AAVE', name: 'Aave', balance: 25.50, valueUSD: 2040.00, icon: '👻' }
       ]
     }
   ];
@@ -158,222 +142,151 @@ export default function WalletsPageClient() {
           Your Wallets
         </h2>
         
-        {isLoading ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="skeleton-card" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {wallets.map((wallet) => (
-              <div
-                key={wallet.id}
-                className="card"
-                style={{
-                  cursor: 'pointer',
-                  transition: 'all var(--transition-normal) ease-in-out',
-                  border: selectedWallet === wallet.id ? '2px solid var(--purple-500)' : '1px solid var(--border-default)'
-                }}
-                onClick={() => setSelectedWallet(selectedWallet === wallet.id ? null : wallet.id)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = 'var(--shadow-3)';
-                }}
-              >
-                {/* Wallet Header */}
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: 'var(--radius-lg)',
-                        background: wallet.type === 'generated' 
-                          ? 'linear-gradient(135deg, var(--purple-500), var(--purple-600))'
-                          : 'linear-gradient(135deg, var(--brown-500), var(--brown-600))',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--text-inverse)',
-                        fontSize: '1.2rem',
-                        fontWeight: 'var(--font-weight-semibold)'
-                      }}
-                    >
-                      {wallet.type === 'generated' ? '🔐' : '📥'}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-primary">
-                        {wallet.name}
-                      </h3>
-                      <p className="text-sm text-secondary font-mono">
-                        {formatAddress(wallet.address)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-primary">
-                      {formatCurrency(wallet.balanceUSD)}
-                    </p>
-                    <p className="text-sm text-secondary">
-                      {wallet.balance.toFixed(4)} ETH
-                    </p>
-                  </div>
-                </div>
-
-                {/* Network Badge */}
-                <div className="flex justify-between items-center mb-4">
-                  <span 
-                    className="px-3 py-1 rounded-md text-sm font-medium"
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {wallets.map((wallet) => (
+            <div
+              key={wallet.id}
+              className="card"
+              style={{
+                cursor: 'pointer',
+                transition: 'all var(--transition-normal) ease-in-out',
+                border: selectedWallet === wallet.id ? '2px solid var(--purple-500)' : '1px solid var(--border-default)'
+              }}
+              onClick={() => setSelectedWallet(selectedWallet === wallet.id ? null : wallet.id)}
+            >
+              {/* Wallet Header */}
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div 
                     style={{
-                      background: 'rgba(33, 150, 243, 0.1)',
-                      color: 'var(--info)',
-                      border: '1px solid rgba(33, 150, 243, 0.2)'
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: 'var(--radius-lg)',
+                      background: wallet.type === 'generated' 
+                        ? 'linear-gradient(135deg, var(--purple-500), var(--purple-600))'
+                        : 'linear-gradient(135deg, var(--brown-500), var(--brown-600))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-inverse)',
+                      fontSize: '1.2rem'
                     }}
                   >
-                    {wallet.network}
-                  </span>
-                  <span className="text-xs text-tertiary">
-                    Last used {wallet.lastUsed}
-                  </span>
-                </div>
-
-                {/* Token Summary */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-secondary">
-                    Top Tokens ({wallet.tokens.length})
-                  </p>
-                  <div className="flex gap-2">
-                    {wallet.tokens.slice(0, 3).map((token) => (
-                      <div
-                        key={token.symbol}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-xs"
-                        style={{
-                          background: 'var(--surface-hover)',
-                          border: '1px solid var(--border-default)'
-                        }}
-                      >
-                        <span>{token.icon}</span>
-                        <span className="font-medium">{token.symbol}</span>
-                      </div>
-                    ))}
-                    {wallet.tokens.length > 3 && (
-                      <div 
-                        className="flex items-center justify-center px-2 py-1 rounded-md text-xs font-medium"
-                        style={{
-                          background: 'var(--surface-pressed)',
-                          color: 'var(--text-secondary)'
-                        }}
-                      >
-                        +{wallet.tokens.length - 3}
-                      </div>
-                    )}
+                    {wallet.type === 'generated' ? '🔐' : '📥'}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-primary">
+                      {wallet.name}
+                    </h3>
+                    <p className="text-sm text-secondary font-mono">
+                      {formatAddress(wallet.address)}
+                    </p>
                   </div>
                 </div>
+                <div className="text-right">
+                  <p className="text-lg font-semibold text-primary">
+                    {formatCurrency(wallet.balanceUSD)}
+                  </p>
+                  <p className="text-sm text-secondary">
+                    {wallet.balance.toFixed(4)} ETH
+                  </p>
+                </div>
+              </div>
 
-                {/* Expanded Details */}
-                {selectedWallet === wallet.id && (
-                  <div 
-                    className="fade-in mt-4 pt-4"
-                    style={{ borderTop: '1px solid var(--border-default)' }}
-                  >
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-semibold text-primary">
-                        Token Breakdown
-                      </h4>
-                      {wallet.tokens.map((token) => (
-                        <div
-                          key={token.symbol}
-                          className="flex justify-between items-center p-2 rounded-md"
-                          style={{ background: 'var(--surface-hover)' }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{token.icon}</span>
-                            <div>
-                              <p className="text-sm font-medium text-primary">
-                                {token.symbol}
-                              </p>
-                              <p className="text-xs text-secondary">
-                                {token.name}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
+              {/* Network Badge */}
+              <div className="flex justify-between items-center mb-4">
+                <span 
+                  className="px-3 py-1 rounded-md text-sm font-medium"
+                  style={{
+                    background: 'rgba(33, 150, 243, 0.1)',
+                    color: 'var(--info)',
+                    border: '1px solid rgba(33, 150, 243, 0.2)'
+                  }}
+                >
+                  {wallet.network}
+                </span>
+                <span className="text-xs text-tertiary">
+                  Last used {wallet.lastUsed}
+                </span>
+              </div>
+
+              {/* Token Summary */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-secondary">
+                  Top Tokens ({wallet.tokens.length})
+                </p>
+                <div className="flex gap-2">
+                  {wallet.tokens.slice(0, 3).map((token) => (
+                    <div
+                      key={token.symbol}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs"
+                      style={{
+                        background: 'var(--surface-hover)',
+                        border: '1px solid var(--border-default)'
+                      }}
+                    >
+                      <span>{token.icon}</span>
+                      <span className="font-medium">{token.symbol}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Expanded Details */}
+              {selectedWallet === wallet.id && (
+                <div 
+                  className="fade-in mt-4 pt-4"
+                  style={{ borderTop: '1px solid var(--border-default)' }}
+                >
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-primary">
+                      Token Breakdown
+                    </h4>
+                    {wallet.tokens.map((token) => (
+                      <div
+                        key={token.symbol}
+                        className="flex justify-between items-center p-2 rounded-md"
+                        style={{ background: 'var(--surface-hover)' }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{token.icon}</span>
+                          <div>
                             <p className="text-sm font-medium text-primary">
-                              {formatCurrency(token.valueUSD)}
+                              {token.symbol}
                             </p>
                             <p className="text-xs text-secondary">
-                              {token.balance.toLocaleString()} {token.symbol}
+                              {token.name}
                             </p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 mt-4">
-                      <Link href={`/send?wallet=${wallet.id}`} className="btn-primary btn-sm" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
-                        💸 Send
-                      </Link>
-                      <button className="btn-secondary btn-sm" style={{ flex: 1 }}>
-                        📥 Receive
-                      </button>
-                      <button className="btn-ghost btn-sm" style={{ flex: 1 }}>
-                        ⚙️ Settings
-                      </button>
-                    </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-primary">
+                            {formatCurrency(token.valueUSD)}
+                          </p>
+                          <p className="text-xs text-secondary">
+                            {token.balance.toLocaleString()} {token.symbol}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Quick Actions */}
-      <section>
-        <h2 className="text-xl font-semibold text-primary mb-4">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <button 
-            className="card text-center"
-            onClick={() => setShowCreateModal(true)}
-            style={{
-              cursor: 'pointer',
-              transition: 'all var(--transition-normal) ease-in-out'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'var(--shadow-2)';
-            }}
-          >
-            <div className="text-2xl mb-2">➕</div>
-            <p className="text-sm font-medium text-primary">Add Wallet</p>
-          </button>
-          
-          <Link href="/send" className="card text-center" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="text-2xl mb-2">💸</div>
-            <p className="text-sm font-medium text-primary">Send Crypto</p>
-          </Link>
-          
-          <button className="card text-center" style={{ cursor: 'pointer' }}>
-            <div className="text-2xl mb-2">📊</div>
-            <p className="text-sm font-medium text-primary">Analytics</p>
-          </button>
-          
-          <button className="card text-center" style={{ cursor: 'pointer' }}>
-            <div className="text-2xl mb-2">📱</div>
-            <p className="text-sm font-medium text-primary">Export</p>
-          </button>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mt-4">
+                    <Link href={`/send?wallet=${wallet.id}`} className="btn-primary btn-sm" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
+                      💸 Send
+                    </Link>
+                    <button className="btn-secondary btn-sm" style={{ flex: 1 }}>
+                      📥 Receive
+                    </button>
+                    <button className="btn-ghost btn-sm" style={{ flex: 1 }}>
+                      ⚙️ Settings
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </section>
 
