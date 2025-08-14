@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Logo from '../components/Logo';
+import { generateMnemonic, validateMnemonic, createWalletFromMnemonic, saveWalletToStorage } from '../../lib/wallet';
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
@@ -9,17 +10,18 @@ export default function Onboarding() {
   const [restoredAddress, setRestoredAddress] = useState<string | null>(null);
   const [inputMnemonic, setInputMnemonic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const startCreate = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const { generateMnemonic } = await import('bip39');
-      const m = generateMnemonic(256); // 24 words
-      setMnemonic(m);
+      const newMnemonic = generateMnemonic();
+      setMnemonic(newMnemonic);
       setStep(1);
     } catch (error) {
       console.error('Error generating mnemonic:', error);
-      alert('Failed to generate seed phrase. Please try again.');
+      setError('Failed to generate seed phrase. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -31,48 +33,59 @@ export default function Onboarding() {
     if (value.trim() === mnemonic.trim()) {
       setStep(3);
     } else {
-      alert('Seed phrase does not match. Please try again.');
+      setError('Seed phrase does not match. Please try again.');
     }
   };
 
   const complete = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const { Wallet } = await import('ethers');
-      const walletAny = (Wallet as unknown) as { fromPhrase?: (m: string) => { address: string }; Wallet?: { fromPhrase: (m: string) => { address: string } } };
-      const wallet = walletAny?.fromPhrase ? walletAny.fromPhrase(mnemonic) : walletAny?.Wallet ? walletAny.Wallet.fromPhrase(mnemonic) : null;
-      if (!wallet) throw new Error('Could not derive wallet');
+      const wallet = await createWalletFromMnemonic(mnemonic);
+      saveWalletToStorage(wallet);
+      
+      // Save mnemonic to localStorage for this session
+      localStorage.setItem('mnemonic', mnemonic);
+      
       setRestoredAddress(wallet.address);
       setStep(4);
     } catch (error) {
       console.error('Error creating wallet:', error);
-      alert('Failed to create wallet. Please try again.');
+      setError('Failed to create wallet. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const startRestore = () => setStep(10);
+  const startRestore = () => {
+    setStep(10);
+    setError(null);
+  };
 
   const restore = async () => {
     if (!inputMnemonic.trim()) {
-      alert('Please enter a seed phrase');
+      setError('Please enter a seed phrase');
       return;
     }
 
     setIsLoading(true);
+    setError(null);
     try {
-      const { validateMnemonic } = await import('bip39');
-      const { Wallet } = await import('ethers');
-      if (!validateMnemonic(inputMnemonic)) throw new Error("Invalid mnemonic");
-      const walletAny = (Wallet as unknown) as { fromPhrase?: (m: string) => { address: string }; Wallet?: { fromPhrase: (m: string) => { address: string } } };
-      const wallet = walletAny?.fromPhrase ? walletAny.fromPhrase(inputMnemonic) : walletAny?.Wallet ? walletAny.Wallet.fromPhrase(inputMnemonic) : null;
-      if (!wallet) throw new Error('Could not derive wallet');
+      if (!validateMnemonic(inputMnemonic)) {
+        throw new Error("Invalid mnemonic");
+      }
+      
+      const wallet = await createWalletFromMnemonic(inputMnemonic);
+      saveWalletToStorage(wallet);
+      
+      // Save mnemonic to localStorage for this session
+      localStorage.setItem('mnemonic', inputMnemonic);
+      
       setRestoredAddress(wallet.address);
       setStep(11);
     } catch (err) {
-      console.warn('restore mnemonic error', err);
-      alert("Invalid seed phrase. Please check and try again.");
+      console.error('restore mnemonic error', err);
+      setError("Invalid seed phrase. Please check and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -191,6 +204,20 @@ export default function Onboarding() {
           <h2 className="text-xl font-semibold text-primary">
             {getStepTitle()}
           </h2>
+          
+          {/* Error Display */}
+          {error && (
+            <div 
+              className="mt-4 p-3 rounded-md"
+              style={{
+                background: 'rgba(244, 67, 54, 0.1)',
+                border: '1px solid rgba(244, 67, 54, 0.2)',
+                color: 'var(--error)'
+              }}
+            >
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
         </header>
         
         {/* Step 0: Welcome */}

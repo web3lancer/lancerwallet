@@ -1,20 +1,57 @@
 "use client";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { getWalletsFromStorage, getPortfolioValue } from "../lib/wallet";
 
 export default function HomeClient() {
-  // Mock data for realistic content
-  const portfolioData = {
-    totalValue: 12847.50,
-    change24h: 2.4,
-    walletCount: 3,
-    activePositions: 8
-  };
+  const [portfolioData, setPortfolioData] = useState({
+    totalValue: 0,
+    change24h: 0,
+    walletCount: 0,
+    activePositions: 0
+  });
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recentTransactions = [
-    { id: 1, type: 'send', amount: '-0.5 ETH', to: '0x1234...5678', time: '2 hours ago', status: 'completed' },
-    { id: 2, type: 'receive', amount: '+1,250 USDC', from: '0x8765...4321', time: '5 hours ago', status: 'completed' },
-    { id: 3, type: 'swap', amount: '0.25 BTC → 8.2 ETH', time: '1 day ago', status: 'completed' },
-  ];
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Get wallets and portfolio data
+        const wallets = getWalletsFromStorage();
+        const { totalValue, change24h } = await getPortfolioValue();
+        
+        setPortfolioData({
+          totalValue,
+          change24h,
+          walletCount: wallets.length,
+          activePositions: 0 // DeFi positions to be implemented
+        });
+
+        // Get recent transactions (placeholder until transaction indexing is implemented)
+        const mockTransactions = [
+          { id: 1, type: 'send', amount: '-0.1 ETH', to: '0x1234...5678', time: '2 hours ago', status: 'completed' },
+          { id: 2, type: 'receive', amount: '+100 USDC', from: '0x8765...4321', time: '5 hours ago', status: 'completed' },
+        ];
+        setRecentTransactions(mockTransactions);
+      } catch (error) {
+        console.error('Error loading portfolio data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="fade-in container" style={{ paddingBottom: 'var(--space-20)' }}>
+        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+          <p>Loading portfolio...</p>
+        </div>
+      </div>
+    );
+  }
 
   const quickActions = [
     {
@@ -25,10 +62,10 @@ export default function HomeClient() {
       variant: 'primary'
     },
     {
-      icon: '💸',
-      title: 'Send & Receive',
-      description: 'Transfer cryptocurrency',
-      href: '/send',
+      icon: '🖼️',
+      title: 'NFT Gallery',
+      description: 'View your NFTs',
+      href: '/nft',
       variant: 'secondary'
     },
     {
@@ -134,39 +171,39 @@ export default function HomeClient() {
           </div>
         </div>
         
-        <div className="flex gap-3" style={{ position: 'relative', zIndex: 1 }}>
-          <Link href="/send" className="btn-secondary" style={{
-            background: 'rgba(255, 255, 255, 0.15)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: 'var(--text-inverse)',
-            flex: 1,
-            textAlign: 'center',
-            textDecoration: 'none'
-          }}>
-            💸 Send
-          </Link>
-          <button 
-            className="btn-secondary"
-            style={{
-              background: 'rgba(255, 255, 255, 0.15)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              color: 'var(--text-inverse)',
-              flex: 1
-            }}
-          >
-            📥 Receive
-          </button>
-          <Link href="/defi" className="btn-secondary" style={{
-            background: 'rgba(255, 255, 255, 0.15)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: 'var(--text-inverse)',
-            flex: 1,
-            textAlign: 'center',
-            textDecoration: 'none'
-          }}>
-            🌐 DeFi
-          </Link>
-        </div>
+         <div className="flex gap-3" style={{ position: 'relative', zIndex: 1 }}>
+           <Link href="/nft" className="btn-secondary" style={{
+             background: 'rgba(255, 255, 255, 0.15)',
+             border: '1px solid rgba(255, 255, 255, 0.2)',
+             color: 'var(--text-inverse)',
+             flex: 1,
+             textAlign: 'center',
+             textDecoration: 'none'
+           }}>
+             🖼️ NFT
+           </Link>
+           <button 
+             className="btn-secondary"
+             style={{
+               background: 'rgba(255, 255, 255, 0.15)',
+               border: '1px solid rgba(255, 255, 255, 0.2)',
+               color: 'var(--text-inverse)',
+               flex: 1
+             }}
+           >
+             📥 Receive
+           </button>
+           <Link href="/defi" className="btn-secondary" style={{
+             background: 'rgba(255, 255, 255, 0.15)',
+             border: '1px solid rgba(255, 255, 255, 0.2)',
+             color: 'var(--text-inverse)',
+             flex: 1,
+             textAlign: 'center',
+             textDecoration: 'none'
+           }}>
+             🌐 DeFi
+           </Link>
+         </div>
       </div>
 
       {/* Quick Actions Grid */}

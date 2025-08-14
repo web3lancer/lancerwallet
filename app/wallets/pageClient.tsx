@@ -1,61 +1,89 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-interface Wallet {
-  id: string;
-  name: string;
-  address: string;
-  balance: number;
-  balanceUSD: number;
-  network: string;
-  type: 'imported' | 'generated';
-  lastUsed: string;
-  tokens: Array<{
-    symbol: string;
-    name: string;
-    balance: number;
-    valueUSD: number;
-    icon: string;
-  }>;
-}
+import { getWalletsFromStorage, getWalletBalance, saveWalletToStorage, createWalletFromMnemonic, generateMnemonic, WalletData } from '../../lib/wallet';
 
 export default function WalletsPageClient() {
+  const [wallets, setWallets] = useState<WalletData[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Mock wallet data
-  const wallets: Wallet[] = [
-    {
-      id: '1',
-      name: 'Main Wallet',
-      address: '0x1234567890abcdef1234567890abcdef12345678',
-      balance: 2.45,
-      balanceUSD: 8420.50,
-      network: 'Ethereum',
-      type: 'generated',
-      lastUsed: '2 hours ago',
-      tokens: [
-        { symbol: 'ETH', name: 'Ethereum', balance: 2.45, valueUSD: 8420.50, icon: '⟠' },
-        { symbol: 'USDC', name: 'USD Coin', balance: 1500.00, valueUSD: 1500.00, icon: '💵' },
-        { symbol: 'UNI', name: 'Uniswap', balance: 145.20, valueUSD: 726.00, icon: '🦄' }
-      ]
-    },
-    {
-      id: '2',
-      name: 'Trading Wallet',
-      address: '0xabcdef1234567890abcdef1234567890abcdef12',
-      balance: 0.85,
-      balanceUSD: 2923.75,
-      network: 'Ethereum',
-      type: 'imported',
-      lastUsed: '1 day ago',
-      tokens: [
-        { symbol: 'ETH', name: 'Ethereum', balance: 0.85, valueUSD: 2923.75, icon: '⟠' },
-        { symbol: 'WBTC', name: 'Wrapped Bitcoin', balance: 0.012, valueUSD: 520.00, icon: '₿' }
-      ]
+  useEffect(() => {
+    const loadWallets = async () => {
+      try {
+        const storedWallets = getWalletsFromStorage();
+        
+        // Update balances for existing wallets
+        const updatedWallets = await Promise.all(
+          storedWallets.map(async (wallet) => {
+            try {
+              const { balance, balanceUSD } = await getWalletBalance(wallet.address, wallet.network);
+              return { ...wallet, balance, balanceUSD };
+            } catch (error) {
+              return wallet; // Return original if balance fetch fails
+            }
+          })
+        );
+        
+        setWallets(updatedWallets);
+      } catch (error) {
+        console.error('Error loading wallets:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWallets();
+  }, []);
+
+  const handleCreateWallet = async () => {
+    try {
+      const mnemonic = generateMnemonic();
+      const newWallet = await createWalletFromMnemonic(mnemonic);
+      
+      // Save to storage
+      saveWalletToStorage(newWallet);
+      setWallets([...wallets, newWallet]);
+      
+      // Save mnemonic for this session (in real app, user should backup securely)
+      localStorage.setItem('mnemonic', mnemonic);
+      
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Error creating wallet:', error);
+      alert('Failed to create wallet. Please try again.');
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <div className="container fade-in" style={{ paddingBottom: 'var(--space-20)' }}>
+        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+          <p>Loading wallets...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (wallets.length === 0) {
+    return (
+      <div className="container fade-in" style={{ paddingBottom: 'var(--space-20)' }}>
+        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+          <h2 className="text-2xl font-bold text-primary mb-4">No Wallets Found</h2>
+          <p className="text-base text-secondary mb-6">
+            Get started by creating your first wallet or importing an existing one.
+          </p>
+          <button 
+            className="btn-primary"
+            onClick={() => setShowCreateModal(true)}
+          >
+            ➕ Add Wallet
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const totalPortfolioValue = wallets.reduce((sum, wallet) => sum + wallet.balanceUSD, 0);
 
@@ -118,20 +146,6 @@ export default function WalletsPageClient() {
                 Across {wallets.length} wallets
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-sm mb-1" style={{ opacity: 0.8 }}>
-                24h Change
-              </div>
-              <div 
-                className="text-lg font-semibold px-3 py-1 rounded-md"
-                style={{
-                  background: 'rgba(76, 175, 80, 0.2)',
-                  color: 'var(--success)'
-                }}
-              >
-                +$127.50 (+0.8%)
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -145,14 +159,14 @@ export default function WalletsPageClient() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {wallets.map((wallet) => (
             <div
-              key={wallet.id}
+              key={wallet.address}
               className="card"
               style={{
                 cursor: 'pointer',
                 transition: 'all var(--transition-normal) ease-in-out',
-                border: selectedWallet === wallet.id ? '2px solid var(--purple-500)' : '1px solid var(--border-default)'
+                border: selectedWallet === wallet.address ? '2px solid var(--purple-500)' : '1px solid var(--border-default)'
               }}
-              onClick={() => setSelectedWallet(selectedWallet === wallet.id ? null : wallet.id)}
+              onClick={() => setSelectedWallet(selectedWallet === wallet.address ? null : wallet.address)}
             >
               {/* Wallet Header */}
               <div className="flex justify-between items-start mb-4">
@@ -162,9 +176,7 @@ export default function WalletsPageClient() {
                       width: '40px',
                       height: '40px',
                       borderRadius: 'var(--radius-lg)',
-                      background: wallet.type === 'generated' 
-                        ? 'linear-gradient(135deg, var(--purple-500), var(--purple-600))'
-                        : 'linear-gradient(135deg, var(--brown-500), var(--brown-600))',
+                      background: 'linear-gradient(135deg, var(--purple-500), var(--purple-600))',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -172,7 +184,7 @@ export default function WalletsPageClient() {
                       fontSize: '1.2rem'
                     }}
                   >
-                    {wallet.type === 'generated' ? '🔐' : '📥'}
+                    👛
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-primary">
@@ -188,7 +200,7 @@ export default function WalletsPageClient() {
                     {formatCurrency(wallet.balanceUSD)}
                   </p>
                   <p className="text-sm text-secondary">
-                    {wallet.balance.toFixed(4)} ETH
+                    {parseFloat(wallet.balance).toFixed(4)} ETH
                   </p>
                 </div>
               </div>
@@ -205,76 +217,18 @@ export default function WalletsPageClient() {
                 >
                   {wallet.network}
                 </span>
-                <span className="text-xs text-tertiary">
-                  Last used {wallet.lastUsed}
-                </span>
-              </div>
-
-              {/* Token Summary */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-secondary">
-                  Top Tokens ({wallet.tokens.length})
-                </p>
-                <div className="flex gap-2">
-                  {wallet.tokens.slice(0, 3).map((token) => (
-                    <div
-                      key={token.symbol}
-                      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs"
-                      style={{
-                        background: 'var(--surface-hover)',
-                        border: '1px solid var(--border-default)'
-                      }}
-                    >
-                      <span>{token.icon}</span>
-                      <span className="font-medium">{token.symbol}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* Expanded Details */}
-              {selectedWallet === wallet.id && (
+              {selectedWallet === wallet.address && (
                 <div 
                   className="fade-in mt-4 pt-4"
                   style={{ borderTop: '1px solid var(--border-default)' }}
                 >
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-primary">
-                      Token Breakdown
-                    </h4>
-                    {wallet.tokens.map((token) => (
-                      <div
-                        key={token.symbol}
-                        className="flex justify-between items-center p-2 rounded-md"
-                        style={{ background: 'var(--surface-hover)' }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{token.icon}</span>
-                          <div>
-                            <p className="text-sm font-medium text-primary">
-                              {token.symbol}
-                            </p>
-                            <p className="text-xs text-secondary">
-                              {token.name}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-primary">
-                            {formatCurrency(token.valueUSD)}
-                          </p>
-                          <p className="text-xs text-secondary">
-                            {token.balance.toLocaleString()} {token.symbol}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
                   {/* Action Buttons */}
                   <div className="flex gap-2 mt-4">
-                    <Link href={`/send?wallet=${wallet.id}`} className="btn-primary btn-sm" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
-                      💸 Send
+                    <Link href={`/nft?wallet=${wallet.address}`} className="btn-primary btn-sm" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
+                      🖼️ NFTs
                     </Link>
                     <button className="btn-secondary btn-sm" style={{ flex: 1 }}>
                       📥 Receive
@@ -298,12 +252,19 @@ export default function WalletsPageClient() {
               Add New Wallet
             </h3>
             <p className="text-base text-secondary mb-6">
-              Choose how you&apos;d like to add a wallet to your account.
+              Choose how you would like to add a wallet to your account.
             </p>
             <div className="space-y-3">
+              <button 
+                className="btn-primary"
+                style={{ width: '100%' }}
+                onClick={handleCreateWallet}
+              >
+                🆕 Create New Wallet
+              </button>
               <Link 
                 href="/onboarding"
-                className="btn-primary"
+                className="btn-secondary"
                 style={{ 
                   width: '100%',
                   textDecoration: 'none',
@@ -311,14 +272,8 @@ export default function WalletsPageClient() {
                   textAlign: 'center'
                 }}
               >
-                🆕 Create New Wallet
-              </Link>
-              <button className="btn-secondary" style={{ width: '100%' }}>
                 📥 Import Existing Wallet
-              </button>
-              <button className="btn-ghost" style={{ width: '100%' }}>
-                🔗 Connect Hardware Wallet
-              </button>
+              </Link>
             </div>
             <button 
               className="btn-ghost mt-4"

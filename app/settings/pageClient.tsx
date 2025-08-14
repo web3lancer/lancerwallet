@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import ThemeSelector from "../components/ThemeSelector";
+import { getWalletsFromStorage } from '../../lib/wallet';
 
 interface SettingToggle {
   id: string;
@@ -106,13 +107,74 @@ export default function SettingsPageClient() {
   };
 
   const handleBackup = () => {
-    // Mock backup functionality
-    alert('Backup functionality would be implemented here');
+    try {
+      const wallets = getWalletsFromStorage();
+      const mnemonic = localStorage.getItem('mnemonic');
+      
+      if (!mnemonic) {
+        alert('No backup data found. Please ensure you have created or imported a wallet.');
+        return;
+      }
+
+      const backupData = {
+        mnemonic,
+        wallets: wallets.map(w => ({ ...w, privateKey: undefined })), // Remove private keys for security
+        timestamp: new Date().toISOString(),
+        version: '1.0'
+      };
+
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lancer-wallet-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Backup failed:', error);
+      alert('Failed to create backup. Please try again.');
+    }
   };
 
   const handleRestore = () => {
-    // Mock restore functionality
-    alert('Restore functionality would be implemented here');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const backupData = JSON.parse(e.target?.result as string);
+          
+          if (!backupData.mnemonic || !backupData.wallets) {
+            throw new Error('Invalid backup file format');
+          }
+
+          // Restore mnemonic
+          localStorage.setItem('mnemonic', backupData.mnemonic);
+          
+          // Restore wallets (they will be re-saved with current balances)
+          backupData.wallets.forEach((wallet: any) => {
+            const existingWallets = getWalletsFromStorage();
+            if (!existingWallets.find(w => w.address === wallet.address)) {
+              localStorage.setItem('wallets', JSON.stringify([...existingWallets, wallet]));
+            }
+          });
+
+          alert('Wallet restored successfully! Please refresh the page to see your restored wallets.');
+        } catch (error) {
+          console.error('Restore failed:', error);
+          alert('Failed to restore wallet. Please check your backup file and try again.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   };
 
    const handleLogout = () => {

@@ -1,40 +1,42 @@
 "use client";
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-
-interface Token {
-  symbol: string;
-  name: string;
-  balance: number;
-  valueUSD: number;
-  icon: string;
-  decimals: number;
-}
-
-interface Wallet {
-  id: string;
-  name: string;
-  address: string;
-  tokens: Token[];
-
-}
+import { getWalletsFromStorage, sendTransaction, WalletData } from '../../lib/wallet';
+import { ethers } from 'ethers';
 
 export default function SendPageClient() {
   const searchParams = useSearchParams();
-  const walletId = searchParams.get('wallet');
+  const walletAddress = searchParams.get('wallet');
   
+  const [wallets, setWallets] = useState<WalletData[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string>('');
-  const [selectedToken, setSelectedToken] = useState<string>('ETH');
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState<'form' | 'review' | 'sending' | 'success'>('form');
+  const [txHash, setTxHash] = useState<string>('');
 
-  // Mock wallet and token data
-  const wallets: Wallet[] = useMemo(() => [
+  useEffect(() => {
+    const loadWallets = () => {
+      const storedWallets = getWalletsFromStorage();
+      setWallets(storedWallets);
+      
+      // Set default wallet if provided in URL
+      if (walletAddress) {
+        const wallet = storedWallets.find(w => w.address === walletAddress);
+        if (wallet) {
+          setSelectedWallet(wallet.address);
+        }
+      } else if (storedWallets.length > 0) {
+        setSelectedWallet(storedWallets[0].address);
+      }
+    };
+
+    loadWallets();
+  }, [walletAddress]);
     {
       id: '1',
       name: 'Main Wallet',
