@@ -45,9 +45,8 @@ export default function Navigation() {
       {/* Desktop aside nav: hidden on small screens, visible on md+ */}
       <aside className="hidden md:flex fixed left-0 top-0 h-full w-56 bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800 flex-col py-8 px-4 z-50">
         <div className="mb-8">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3" aria-label="Lancer Wallet">
             <Logo size={44} />
-            <span className="font-bold text-lg">Lancer</span>
           </Link>
         </div>
         {navItems.map((item) => (
