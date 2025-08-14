@@ -57,87 +57,324 @@ const walletAny = (Wallet as unknown) as { fromPhrase?: (m: string) => { address
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="max-w-2xl w-full bg-white dark:bg-gray-900 rounded-2xl shadow p-8">
-        <div className="flex justify-center mb-6">
+    <main 
+      className="min-h-screen flex items-center justify-center fade-in"
+      style={{
+        padding: 'var(--space-6)',
+        background: 'var(--bg-primary)'
+      }}
+    >
+      <div 
+        className="card"
+        style={{
+          maxWidth: '600px',
+          width: '100%',
+          padding: 'var(--space-8)',
+          borderRadius: 'var(--radius-2xl)'
+        }}
+      >
+        <div 
+          className="flex justify-center"
+          style={{ marginBottom: 'var(--space-6)' }}
+        >
           <Logo size={72} />
         </div>
+        
         {step === 0 && (
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Welcome to LancerWallet</h2>
-            <p className="mb-6">Create a new wallet or restore an existing one.</p>
-            <div className="flex gap-4 justify-center">
-              <button onClick={startCreate} className="bg-purple-600 text-white px-4 py-2 rounded">Create new wallet</button>
-              <button onClick={startRestore} className="border px-4 py-2 rounded">Restore existing wallet</button>
+            <h2 
+              style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: 'var(--text-primary)',
+                marginBottom: 'var(--space-4)'
+              }}
+            >
+              Welcome to LancerWallet
+            </h2>
+            <p 
+              style={{
+                fontSize: '16px',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-6)'
+              }}
+            >
+              Create a new wallet or restore an existing one to get started.
+            </p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <button onClick={startCreate} className="btn-primary">
+                Create new wallet
+              </button>
+              <button onClick={startRestore} className="btn-secondary">
+                Restore existing wallet
+              </button>
             </div>
           </div>
         )}
 
         {step === 1 && (
           <div>
-            <h3 className="text-xl font-semibold mb-2">Your seed phrase (write it down)</h3>
-            <p className="mb-4 text-sm text-gray-600">This is the only way to recover your wallet. Keep it private and offline.</p>
-            <div className="bg-gray-100 p-4 rounded mb-4 whitespace-pre-wrap">{mnemonic}</div>
-            <div className="flex gap-4">
-              <button onClick={proceedToVerify} className="bg-purple-600 text-white px-4 py-2 rounded">I&apos;ve saved it</button>
-              <button onClick={() => setStep(0)} className="border px-4 py-2 rounded">Cancel</button>
+            <h3 
+              style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: 'var(--text-primary)',
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              Your seed phrase
+            </h3>
+            <p 
+              style={{
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-4)'
+              }}
+            >
+              Write this down and store it safely. This is the only way to recover your wallet.
+            </p>
+            <div 
+              style={{
+                background: 'var(--surface-hover)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-4)',
+                marginBottom: 'var(--space-4)',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '14px',
+                lineHeight: '20px'
+              }}
+            >
+              {mnemonic}
+            </div>
+            <div className="flex gap-4 flex-wrap">
+              <button onClick={proceedToVerify} className="btn-primary">
+                I've saved it securely
+              </button>
+              <button onClick={() => setStep(0)} className="btn-secondary">
+                Cancel
+              </button>
             </div>
           </div>
         )}
 
         {step === 2 && (
           <div>
-            <h3 className="text-xl font-semibold mb-2">Verify your seed phrase</h3>
-            <p className="mb-4 text-sm text-gray-600">Type your seed phrase to confirm you backed it up.</p>
-            <textarea value={inputMnemonic} onChange={(e) => setInputMnemonic(e.target.value)} className="w-full p-3 border rounded mb-4" rows={3} />
-            <div className="flex gap-4">
-              <button onClick={() => verify(inputMnemonic)} className="bg-purple-600 text-white px-4 py-2 rounded">Verify</button>
-              <button onClick={() => setStep(1)} className="border px-4 py-2 rounded">Back</button>
+            <h3 
+              style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: 'var(--text-primary)',
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              Verify your seed phrase
+            </h3>
+            <p 
+              style={{
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-4)'
+              }}
+            >
+              Type your seed phrase to confirm you backed it up correctly.
+            </p>
+            <textarea 
+              value={inputMnemonic} 
+              onChange={(e) => setInputMnemonic(e.target.value)} 
+              className="input"
+              style={{
+                width: '100%',
+                marginBottom: 'var(--space-4)',
+                minHeight: '80px',
+                resize: 'vertical',
+                fontFamily: 'var(--font-mono)'
+              }}
+              rows={3}
+              placeholder="Enter your seed phrase..."
+            />
+            <div className="flex gap-4 flex-wrap">
+              <button onClick={() => verify(inputMnemonic)} className="btn-primary">
+                Verify
+              </button>
+              <button onClick={() => setStep(1)} className="btn-secondary">
+                Back
+              </button>
             </div>
           </div>
         )}
 
         {step === 3 && (
           <div>
-            <h3 className="text-xl font-semibold mb-2">Finalizing</h3>
-            <p className="mb-4 text-sm text-gray-600">We&apos;ll derive your wallet address now.</p>
+            <h3 
+              style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: 'var(--text-primary)',
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              Generate wallet
+            </h3>
+            <p 
+              style={{
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-4)'
+              }}
+            >
+              We'll now derive your wallet address from your seed phrase.
+            </p>
             <div className="flex gap-4">
-              <button onClick={complete} className="bg-purple-600 text-white px-4 py-2 rounded">Generate wallet</button>
+              <button onClick={complete} className="btn-primary">
+                Generate wallet
+              </button>
             </div>
           </div>
         )}
 
         {step === 4 && (
-          <div>
-            <h3 className="text-xl font-semibold mb-2">All set!</h3>
-            <p className="mb-2">Your wallet address:</p>
-            <div className="bg-gray-100 p-3 rounded mb-4">{restoredAddress}</div>
-            <div className="flex gap-4">
-              <Link href="/home" className="bg-purple-600 text-white px-4 py-2 rounded">Go to dashboard</Link>
+          <div className="text-center">
+            <div 
+              style={{
+                fontSize: '48px',
+                marginBottom: 'var(--space-4)'
+              }}
+            >
+              ✅
             </div>
+            <h3 
+              style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: 'var(--text-primary)',
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              Wallet created successfully!
+            </h3>
+            <p 
+              style={{
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              Your wallet address:
+            </p>
+            <div 
+              style={{
+                background: 'var(--surface-hover)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-3)',
+                marginBottom: 'var(--space-6)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '12px',
+                wordBreak: 'break-all'
+              }}
+            >
+              {restoredAddress}
+            </div>
+            <Link href="/home" className="btn-primary" style={{ textDecoration: 'none' }}>
+              Go to dashboard
+            </Link>
           </div>
         )}
 
         {step === 10 && (
           <div>
-            <h3 className="text-xl font-semibold mb-2">Restore wallet</h3>
-            <p className="mb-4 text-sm text-gray-600">Paste your seed phrase below.</p>
-            <textarea value={inputMnemonic} onChange={(e) => setInputMnemonic(e.target.value)} className="w-full p-3 border rounded mb-4" rows={3} />
-            <div className="flex gap-4">
-              <button onClick={restore} className="bg-purple-600 text-white px-4 py-2 rounded">Restore</button>
-              <button onClick={() => setStep(0)} className="border px-4 py-2 rounded">Cancel</button>
+            <h3 
+              style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: 'var(--text-primary)',
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              Restore wallet
+            </h3>
+            <p 
+              style={{
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-4)'
+              }}
+            >
+              Enter your seed phrase to restore your existing wallet.
+            </p>
+            <textarea 
+              value={inputMnemonic} 
+              onChange={(e) => setInputMnemonic(e.target.value)} 
+              className="input"
+              style={{
+                width: '100%',
+                marginBottom: 'var(--space-4)',
+                minHeight: '80px',
+                resize: 'vertical',
+                fontFamily: 'var(--font-mono)'
+              }}
+              rows={3}
+              placeholder="Enter your seed phrase..."
+            />
+            <div className="flex gap-4 flex-wrap">
+              <button onClick={restore} className="btn-primary">
+                Restore wallet
+              </button>
+              <button onClick={() => setStep(0)} className="btn-secondary">
+                Cancel
+              </button>
             </div>
           </div>
         )}
 
         {step === 11 && (
-          <div>
-            <h3 className="text-xl font-semibold mb-2">Restored</h3>
-            <p className="mb-2">Restored wallet address:</p>
-            <div className="bg-gray-100 p-3 rounded mb-4">{restoredAddress}</div>
-            <div className="flex gap-4">
-              <Link href="/home" className="bg-purple-600 text-white px-4 py-2 rounded">Go to dashboard</Link>
+          <div className="text-center">
+            <div 
+              style={{
+                fontSize: '48px',
+                marginBottom: 'var(--space-4)'
+              }}
+            >
+              🎉
             </div>
+            <h3 
+              style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: 'var(--text-primary)',
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              Wallet restored successfully!
+            </h3>
+            <p 
+              style={{
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--space-2)'
+              }}
+            >
+              Restored wallet address:
+            </p>
+            <div 
+              style={{
+                background: 'var(--surface-hover)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-3)',
+                marginBottom: 'var(--space-6)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '12px',
+                wordBreak: 'break-all'
+              }}
+            >
+              {restoredAddress}
+            </div>
+            <Link href="/home" className="btn-primary" style={{ textDecoration: 'none' }}>
+              Go to dashboard
+            </Link>
           </div>
         )}
       </div>
