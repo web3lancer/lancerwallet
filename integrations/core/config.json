@@ -1,21 +1,10 @@
 {
-  "testnet": {
-    "name": "Core Testnet",
-    "chainId": 1114,
-    "hexChainId": "0x45a",
-    "rpcUrl": "https://rpc.test2.btcs.network",
-    "currencySymbol": "tCORE2",
-    "blockExplorerUrl": "https://scan.test2.btcs.network",
-    "faucetUrl": "https://scan.test2.btcs.network/faucet",
-    "stakingUrl": "https://stake.test2.btcs.network/"
-  },
-  "mainnet": {
-    "name": "Core Mainnet",
-    "chainId": 1116,
-    "hexChainId": "0x45c", 
-    "rpcUrl": "https://rpc.coredao.org/",
-    "currencySymbol": "CORE",
-    "blockExplorerUrl": "https://scan.coredao.org",
-    "stakingUrl": "https://stake.coredao.org/"
-  }
+  "name": "Core Testnet",
+  "chainId": 1114,
+  "hexChainId": "0x45a",
+  "rpcUrl": "https://rpc.test2.btcs.network",
+  "currencySymbol": "tCORE2",
+  "blockExplorerUrl": "https://scan.test2.btcs.network",
+  "faucetUrl": "https://scan.test2.btcs.network/faucet",
+  "stakingUrl": "https://stake.test2.btcs.network/"
 }
