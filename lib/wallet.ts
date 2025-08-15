@@ -65,7 +65,7 @@ export async function createWalletFromMnemonic(mnemonic: string, network: string
       network,
       privateKey: wallet.privateKey
     };
-  } catch (error) {
+  } catch {
     throw new Error('Failed to create wallet from mnemonic');
   }
 }
@@ -97,7 +97,7 @@ export async function getWalletBalance(address: string, network: string = 'ether
     const balanceUSD = parseFloat(balanceEth) * ethPrice;
     
     return { balance: balanceEth, balanceUSD };
-  } catch (error) {
+  } catch {
     return { balance: '0', balanceUSD: 0 };
   }
 }
@@ -108,7 +108,7 @@ export async function getTransactionHistory(): Promise<Transaction[]> {
     // In a real implementation, you'd use an indexing service like Etherscan API
     // For now, return empty array as getting full tx history requires external APIs
     return [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -130,7 +130,7 @@ export async function sendTransaction(
     });
     
     return tx.hash;
-  } catch (error) {
+  } catch {
     throw new Error('Failed to send transaction');
   }
 }

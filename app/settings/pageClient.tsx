@@ -159,7 +159,7 @@ export default function SettingsPageClient() {
           localStorage.setItem('mnemonic', backupData.mnemonic);
           
           // Restore wallets (they will be re-saved with current balances)
-          backupData.wallets.forEach((wallet: any) => {
+          backupData.wallets.forEach((wallet: { address: string }) => {
             const existingWallets = getWalletsFromStorage();
             if (!existingWallets.find(w => w.address === wallet.address)) {
               localStorage.setItem('wallets', JSON.stringify([...existingWallets, wallet]));

@@ -20,7 +20,7 @@ export default function WalletsPageClient() {
             try {
               const { balance, balanceUSD } = await getWalletBalance(wallet.address, wallet.network);
               return { ...wallet, balance, balanceUSD };
-            } catch (error) {
+            } catch {
               return wallet; // Return original if balance fetch fails
             }
           })

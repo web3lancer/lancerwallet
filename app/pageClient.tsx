@@ -10,7 +10,15 @@ export default function HomeClient() {
     walletCount: 0,
     activePositions: 0
   });
-  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Array<{
+    id: number;
+    type: string;
+    amount: string;
+    to?: string;
+    from?: string;
+    time: string;
+    status: string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
