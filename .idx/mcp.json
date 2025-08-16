@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+
+    "github": {
+			"type": "http",
+			"url": "https://api.githubcopilot.com/mcp/",
+			"gallery": true
+		},
+		"appwrite": {
+			"command": "uvx",
+			"args": [
+				"mcp-server-appwrite",
+				"--sites"
+			],
+			"env": {
+				"APPWRITE_PROJECT_ID": "",
+				"APPWRITE_API_KEY": "",
+				"APPWRITE_ENDPOINT": "https://fra.cloud.appwrite.io/v1"
+			}
+    	}
+
+
+
+  }
+}
