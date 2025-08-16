@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navigation from "./components/Navigation";
+import ThemeProvider from "./components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,30 +19,26 @@ export const metadata: Metadata = {
   description: "Open-source crypto wallet inspired by TrustWallet",
 };
 
-import Navigation from "./components/Navigation";
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Navigation />
-        <main 
-          className="min-h-screen"
-          style={{
-            marginLeft: typeof window !== 'undefined' && window.location.pathname !== '/' ? '240px' : '0',
-            paddingBottom: '80px',
-            padding: 'var(--space-6)',
-            background: 'var(--bg-primary)'
-          }}
-        >
-          {children}
-        </main>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="antialiased">
+        <ThemeProvider>
+          <div className="min-h-screen bg-bg-primary">
+            <Navigation />
+            
+            {/* Main Content */}
+            <main className="transition-all duration-300 lg:ml-64">
+              <div className="pb-20 lg:pb-0">
+                {children}
+              </div>
+            </main>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,216 +1,240 @@
 "use client";
-import React from "react";
-import { usePathname } from "next/navigation";
-import Logo from "./Logo";
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import Logo from './Logo';
 
-const navItems = [
-  { name: "Home", icon: "🏠", href: "/home", description: "Main dashboard with portfolio overview" },
-  { name: "NFT", icon: "🖼️", href: "/nft", description: "View and manage NFTs" },
-  { name: "DeFi", icon: "🌐", href: "/defi", description: "Decentralized finance protocols" },
-  { name: "Settings", icon: "⚙️", href: "/settings", description: "App settings and preferences" },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+}
+
+const navItems: NavItem[] = [
+  {
+    href: '/home',
+    label: 'Home',
+    description: 'Main dashboard with portfolio overview',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+    )
+  },
+  {
+    href: '/wallets',
+    label: 'Wallets',
+    description: 'Manage your crypto wallets',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    )
+  },
+  {
+    href: '/send',
+    label: 'Send',
+    description: 'Send cryptocurrency and tokens',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+      </svg>
+    )
+  },
+  {
+    href: '/nft',
+    label: 'NFTs',
+    description: 'View and manage NFTs',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    )
+  },
+  {
+    href: '/defi',
+    label: 'DeFi',
+    description: 'Decentralized finance protocols',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+      </svg>
+    )
+  },
+  {
+    href: '/settings',
+    label: 'Settings',
+    description: 'App settings and preferences',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    )
+  }
 ];
 
 export default function Navigation() {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Hide navigation entirely on landing page and onboarding
+  // Hide navigation on landing and onboarding pages
   if (pathname === "/" || pathname === "/onboarding") return null;
 
   return (
     <>
-      {/* Mobile bottom nav */}
-      <nav 
-        className="fixed bottom-0 left-0 w-full z-50 md:hidden"
-        style={{
-          background: 'var(--surface-elevated)',
-          borderTop: '1px solid var(--border-default)',
-          boxShadow: '0 -2px 10px rgba(45, 27, 21, 0.1)',
-          height: 'var(--bottombar-height)',
-          padding: 'var(--space-2) var(--space-4)'
-        }}
-      >
-        <div className="flex items-center justify-between h-full">
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center" aria-label="Lancer Wallet Home">
-              <Logo size={32} />
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:border-r lg:border-border-default lg:bg-surface-elevated lg:overflow-y-auto lg:z-40">
+        <div className="flex flex-col flex-grow pt-6 pb-4">
+          {/* Logo */}
+          <div className="flex items-center flex-shrink-0 px-6 mb-8">
+            <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform">
+              <Logo size={44} />
+              <span className="text-xl font-bold text-primary">LancerWallet</span>
             </Link>
           </div>
-          <div className="flex gap-2 flex-1 justify-center">
+          
+          {/* Navigation Items */}
+          <nav className="mt-5 flex-grow px-3 space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
-                  key={item.name}
+                  key={item.href}
                   href={item.href}
-                  className="flex flex-col items-center justify-center transition-all"
-                  style={{
-                    color: isActive ? 'var(--purple-500)' : 'var(--text-secondary)',
-                    minHeight: '48px',
-                    minWidth: '48px',
-                    borderRadius: 'var(--radius-md)',
-                    padding: 'var(--space-1)',
-                    backgroundColor: isActive ? 'rgba(124, 90, 255, 0.1)' : 'transparent',
-                    transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                    transition: 'all var(--transition-normal) ease-in-out'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.backgroundColor = 'var(--surface-hover)';
-                      e.currentTarget.style.color = 'var(--text-primary)';
-                      e.currentTarget.style.transform = 'scale(1.02)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = 'var(--text-secondary)';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }
-                  }}
-                  aria-label={item.description}
+                  className={`group relative flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all ${
+                    isActive
+                      ? 'bg-purple-500 text-white shadow-md'
+                      : 'text-secondary hover:bg-surface-hover hover:text-primary'
+                  }`}
                 >
-                  <span className="text-lg mb-1">{item.icon}</span>
-                  <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-medium)' }}>
-                    {item.name}
-                  </span>
+                  {isActive && (
+                    <motion.div
+                      className="absolute inset-0 bg-purple-500 rounded-lg shadow-md"
+                      layoutId="desktopActiveNav"
+                      transition={{ type: "spring" as const, stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <div className="relative flex items-center gap-3 w-full">
+                    <span className="flex-shrink-0">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
                 </Link>
               );
             })}
-          </div>
-        </div>
-      </nav>
-
-      {/* Desktop sidebar */}
-      <aside 
-        className="hidden md:flex fixed left-0 top-0 h-full z-50 flex-col"
-        style={{
-          width: 'var(--sidebar-width)',
-          background: 'var(--surface-elevated)',
-          borderRight: '1px solid var(--border-default)',
-          padding: 'var(--space-6)',
-          boxShadow: 'var(--shadow-2)'
-        }}
-      >
-        {/* Logo section */}
-        <div style={{ marginBottom: 'var(--space-8)' }}>
-          <Link 
-            href="/" 
-            className="flex items-center gap-3 transition-all hover:scale-105" 
-            aria-label="Lancer Wallet Home"
-            style={{
-              padding: 'var(--space-2)',
-              borderRadius: 'var(--radius-lg)',
-              transition: 'all var(--transition-normal) ease-in-out'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--surface-hover)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <Logo size={44} />
-            <span 
-              style={{ 
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.25px'
-              }}
-            >
-              Lancer
-            </span>
-          </Link>
-        </div>
-        
-        {/* Navigation items */}
-        <nav className="flex-1 flex flex-col gap-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="nav-item"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-3)',
-                  padding: 'var(--space-3) var(--space-4)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: 'var(--font-size-base)',
-                  fontWeight: isActive ? 'var(--font-weight-semibold)' : 'var(--font-weight-medium)',
-                  color: isActive ? 'var(--text-inverse)' : 'var(--text-secondary)',
-                  backgroundColor: isActive ? 'var(--purple-500)' : 'transparent',
-                  boxShadow: isActive ? 'var(--shadow-2)' : 'none',
-                  transition: 'all var(--transition-normal) ease-in-out',
-                  textDecoration: 'none',
-                  minHeight: '48px',
-                  transform: isActive ? 'translateX(4px)' : 'translateX(0)'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'var(--surface-hover)';
-                    e.currentTarget.style.color = 'var(--text-primary)';
-                    e.currentTarget.style.transform = 'translateX(2px)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-1)';
-                  } else {
-                    e.currentTarget.style.backgroundColor = 'var(--purple-600)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-3)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                    e.currentTarget.style.transform = 'translateX(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  } else {
-                    e.currentTarget.style.backgroundColor = 'var(--purple-500)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-2)';
-                  }
-                }}
-                aria-label={item.description}
-                title={item.description}
-              >
-                <span 
-                  className="text-xl" 
-                  style={{ 
-                    opacity: isActive ? 1 : 0.8,
-                    transition: 'opacity var(--transition-normal) ease-in-out'
-                  }}
-                >
-                  {item.icon}
-                </span>
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Bottom section - could add user profile or quick actions */}
-        <div 
-          style={{ 
-            marginTop: 'auto', 
-            paddingTop: 'var(--space-6)',
-            borderTop: '1px solid var(--border-default)'
-          }}
-        >
-          <div 
-            style={{
-              padding: 'var(--space-3)',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--surface-hover)',
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--text-tertiary)',
-              textAlign: 'center'
-            }}
-          >
-            <span style={{ fontWeight: 'var(--font-weight-medium)' }}>v1.0.0</span>
+          </nav>
+          
+          {/* Bottom section */}
+          <div className="px-6 pt-6 border-t border-border-default">
+            <div className="p-3 rounded-lg bg-surface-hover text-center">
+              <span className="text-xs font-medium text-tertiary">v1.0.0</span>
+            </div>
           </div>
         </div>
       </aside>
+
+      {/* Mobile Header */}
+      <header className="lg:hidden sticky top-0 z-50 bg-surface-elevated/80 backdrop-blur-xl border-b border-border-default">
+        <div className="flex items-center justify-between p-4">
+          <Link href="/" className="flex items-center gap-3">
+            <Logo size={32} />
+            <span className="text-lg font-bold text-primary">LancerWallet</span>
+          </Link>
+          
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+              />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            className="lg:hidden fixed inset-0 z-40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            
+            <motion.div
+              className="absolute top-0 right-0 w-80 h-full bg-surface-elevated border-l border-border-default"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring" as const, stiffness: 400, damping: 30 }}
+            >
+              <div className="flex flex-col h-full pt-20 px-6">
+                <nav className="space-y-2">
+                  {navItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                          isActive
+                            ? 'bg-purple-500 text-white'
+                            : 'text-secondary hover:bg-surface-hover hover:text-primary'
+                        }`}
+                      >
+                        <span>{item.icon}</span>
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface-elevated/90 backdrop-blur-xl border-t border-border-default z-40">
+        <div className="flex items-center justify-around py-2">
+          {navItems.slice(0, 5).map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center p-2 min-w-[60px] transition-all relative ${
+                  isActive ? 'text-purple-500' : 'text-secondary'
+                }`}
+              >
+                <span className="block mb-1">{item.icon}</span>
+                <span className="text-xs font-medium">{item.label}</span>
+                {isActive && (
+                  <motion.div
+                    className="absolute bottom-0 left-1/2 w-6 h-1 bg-purple-500 rounded-full"
+                    layoutId="mobileActiveNav"
+                    style={{ transform: 'translateX(-50%)' }}
+                    transition={{ type: "spring" as const, stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </>
   );
 }
