@@ -2,6 +2,10 @@
 
 LancerWallet is an open-source, modular, and extensible crypto wallet inspired by TrustWallet. Built for scalability, security, and developer experience, it combines Web3 functionality with robust Web2 infrastructure powered by Appwrite.
 
+## 🔗 Integrations
+
+- Core Integration: https://github.com/web3lancer/contracts_lancerwallet_core.git — Smart contracts and core DAO logic for web3lancer web3 wallet functionality
+
 ## Features
 - Multi-chain support (EVM, Solana, Bitcoin, and more)
 - Secure key management and encryption
