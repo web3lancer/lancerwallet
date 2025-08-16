@@ -40,7 +40,8 @@ export default function SendPageClient() {
 
   const currentWallet = wallets.find(w => w.address === selectedWallet);
   const estimatedGasFee = 0.0015; // ETH
-  const estimatedGasFeeUSD = estimatedGasFee * 2400; // Mock ETH price
+  const ethPrice = 2400; // TODO: Fetch from API
+  const estimatedGasFeeUSD = estimatedGasFee * ethPrice;
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;

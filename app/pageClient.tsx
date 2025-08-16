@@ -35,12 +35,9 @@ export default function HomeClient() {
           activePositions: 0 // DeFi positions to be implemented
         });
 
-        // Get recent transactions (placeholder until transaction indexing is implemented)
-        const mockTransactions = [
-          { id: 1, type: 'send', amount: '-0.1 ETH', to: '0x1234...5678', time: '2 hours ago', status: 'completed' },
-          { id: 2, type: 'receive', amount: '+100 USDC', from: '0x8765...4321', time: '5 hours ago', status: 'completed' },
-        ];
-        setRecentTransactions(mockTransactions);
+        // Load recent transactions from storage or API
+        const storedTransactions = JSON.parse(localStorage.getItem('recentTransactions') || '[]');
+        setRecentTransactions(storedTransactions);
       } catch (error) {
         console.error('Error loading portfolio data:', error);
       } finally {
@@ -288,61 +285,69 @@ export default function HomeClient() {
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-          {recentTransactions.map((tx) => (
-            <div
-              key={tx.id}
-              className="flex items-center justify-between p-3"
-              style={{
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'var(--surface-hover)',
-                border: '1px solid var(--border-default)'
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div 
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: 'var(--radius-full)',
-                    background: tx.type === 'send' ? 'rgba(244, 67, 54, 0.1)' 
-                              : tx.type === 'receive' ? 'rgba(76, 175, 80, 0.1)'
-                              : 'rgba(124, 90, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.2rem'
-                  }}
-                >
-                  {tx.type === 'send' ? '📤' : tx.type === 'receive' ? '📥' : '🔄'}
+          {recentTransactions.length > 0 ? (
+            recentTransactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="flex items-center justify-between p-3"
+                style={{
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--surface-hover)',
+                  border: '1px solid var(--border-default)'
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div 
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: 'var(--radius-full)',
+                      background: tx.type === 'send' ? 'rgba(244, 67, 54, 0.1)' 
+                                : tx.type === 'receive' ? 'rgba(76, 175, 80, 0.1)'
+                                : 'rgba(124, 90, 255, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem'
+                    }}
+                  >
+                    {tx.type === 'send' ? '📤' : tx.type === 'receive' ? '📥' : '🔄'}
+                  </div>
+                  <div>
+                    <p className="text-base font-medium text-primary">
+                      {tx.amount}
+                    </p>
+                    <p className="text-sm text-secondary">
+                      {tx.type === 'send' ? `To ${tx.to}` 
+                       : tx.type === 'receive' ? `From ${tx.from}`
+                       : 'Token Swap'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-base font-medium text-primary">
-                    {tx.amount}
-                  </p>
-                  <p className="text-sm text-secondary">
-                    {tx.type === 'send' ? `To ${tx.to}` 
-                     : tx.type === 'receive' ? `From ${tx.from}`
-                     : 'Token Swap'}
+                <div className="text-right">
+                  <div 
+                    className="text-xs px-2 py-1 rounded-md"
+                    style={{
+                      background: 'rgba(76, 175, 80, 0.1)',
+                      color: 'var(--success)',
+                      marginBottom: 'var(--space-1)'
+                    }}
+                  >
+                    {tx.status}
+                  </div>
+                  <p className="text-xs text-tertiary">
+                    {tx.time}
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <div 
-                  className="text-xs px-2 py-1 rounded-md"
-                  style={{
-                    background: 'rgba(76, 175, 80, 0.1)',
-                    color: 'var(--success)',
-                    marginBottom: 'var(--space-1)'
-                  }}
-                >
-                  {tx.status}
-                </div>
-                <p className="text-xs text-tertiary">
-                  {tx.time}
-                </p>
-              </div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-4">📝</div>
+              <p className="text-base text-secondary mb-2">No transactions yet</p>
+              <p className="text-sm text-tertiary">Your transaction history will appear here</p>
             </div>
-          ))}
+          )}
         </div>
       </section>
     </div>

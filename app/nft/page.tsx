@@ -1,11 +1,16 @@
-"use client";
-import React from "react";
+import { Suspense } from 'react';
+import NFTPageClient from './pageClient';
 
 export default function NFTPage() {
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">NFTs</h1>
-      <p>Welcome to your NFT gallery. This page will display your NFTs and allow you to manage them.</p>
-    </div>
+    <Suspense fallback={
+      <div className="container fade-in" style={{ paddingBottom: 'var(--space-20)' }}>
+        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+          <p>Loading NFTs...</p>
+        </div>
+      </div>
+    }>
+      <NFTPageClient />
+    </Suspense>
   );
 }
