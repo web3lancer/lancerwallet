@@ -867,7 +867,7 @@ async function createConfigCollections() {
   await ensureStringAttribute("networks", "rpcUrl", 500, false);
   await ensureStringAttribute("networks", "explorerUrl", 500, false);
   await ensureStringAttribute("networks", "nativeSymbol", 20, false);
-  await ensureBooleanAttribute("networks", "enabled", true, false, true);
+  await ensureBooleanAttribute("networks", "enabled", true, false, undefined);
   await ensureIntegerAttribute("networks", "order", false);
   await ensureStringAttribute("networks", "metadata", 5000, false);
 
@@ -882,7 +882,7 @@ async function createConfigCollections() {
   await ensureCollection("languages", "Languages");
   await ensureStringAttribute("languages", "code", 10, true, false, undefined, true);
   await ensureStringAttribute("languages", "name", 100, true);
-  await ensureBooleanAttribute("languages", "enabled", true, false, true);
+  await ensureBooleanAttribute("languages", "enabled", true, false, undefined);
   await ensureIntegerAttribute("languages", "order", false);
 
   await seedDocuments("languages", [
@@ -895,8 +895,8 @@ async function createConfigCollections() {
   await ensureStringAttribute("currencies", "code", 10, true, false, undefined, true);
   await ensureStringAttribute("currencies", "symbol", 10, true);
   await ensureStringAttribute("currencies", "name", 100, true);
-  await ensureIntegerAttribute("currencies", "decimals", true, false, 0, 18, 2);
-  await ensureBooleanAttribute("currencies", "enabled", true, false, true);
+  await ensureIntegerAttribute("currencies", "decimals", true, false, 0, 18, undefined);
+  await ensureBooleanAttribute("currencies", "enabled", true, false, undefined);
   await ensureIntegerAttribute("currencies", "order", false);
 
   await seedDocuments("currencies", [
@@ -910,7 +910,7 @@ async function createConfigCollections() {
   await ensureCollection("token_standards", "Token Standards");
   await ensureStringAttribute("token_standards", "key", 20, true, false, undefined, true);
   await ensureStringAttribute("token_standards", "name", 100, true);
-  await ensureBooleanAttribute("token_standards", "enabled", true, false, true);
+  await ensureBooleanAttribute("token_standards", "enabled", true, false, undefined);
   await ensureIntegerAttribute("token_standards", "order", false);
 
   await seedDocuments("token_standards", [
@@ -923,7 +923,7 @@ async function createConfigCollections() {
   await ensureCollection("alert_types", "Alert Types");
   await ensureStringAttribute("alert_types", "key", 30, true, false, undefined, true);
   await ensureStringAttribute("alert_types", "name", 100, true);
-  await ensureBooleanAttribute("alert_types", "enabled", true, false, true);
+  await ensureBooleanAttribute("alert_types", "enabled", true, false, undefined);
   await ensureIntegerAttribute("alert_types", "order", false);
 
   await seedDocuments("alert_types", [
