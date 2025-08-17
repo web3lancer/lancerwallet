@@ -11,17 +11,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/home', request.url));
   }
 
-  // If the user is trying to access any page other than the auth page
-  // and is not logged in, redirect them to the auth page.
-  // We also exclude API routes and Next.js internal routes.
-  if (!sessionCookie && pathname !== '/auth' && !pathname.startsWith('/api/') && !pathname.startsWith('/_next/')) {
-    // Allow access to the root landing page for new users
-    if (pathname === '/') {
-      return NextResponse.next();
-    }
-    return NextResponse.redirect(new URL('/auth', request.url));
-  }
-
+  // Allow access to all pages - auth is now optional
+  // Only redirect to auth for admin-only pages if needed in the future
   return NextResponse.next();
 }
 

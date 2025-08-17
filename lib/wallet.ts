@@ -145,7 +145,7 @@ export async function getDecryptedWallets(userPassword: string, userId: string):
     AppwriteSDK.config.collectionId,
     [Query.equal('userId', userId)]
   );
-  const decryptedWallets = response.documents.map((doc: any) => {
+  const decryptedWallets = response.documents.map((doc) => {
     const decrypted = decryptData<WalletData>(doc.encryptedWalletData, userPassword);
     if (!decrypted) {
       console.error(`Failed to decrypt wallet ${doc.address}. The password may be incorrect.`);
