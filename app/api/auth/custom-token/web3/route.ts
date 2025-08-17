@@ -1,44 +1,62 @@
-import { NextResponse } from 'next/server';
-import { recoverAddress } from '../../../../../lib/appwrite/web3';
-import { verifyAndConsumeNonce } from '../../nonce/store';
+import { NextResponse } from "next/server";
+import { recoverAddress } from "../../../../../lib/appwrite/web3";
+import { verifyAndConsumeNonceFromDB } from "../../nonce/route";
+import { AppwriteSDK } from "@/lib/appwrite";
+import { ID, Query } from "appwrite";
 
 export async function POST(req: Request) {
   const body = await req.json();
   const { address, signature, key, nonce } = body;
-  if (!address || !signature || !nonce || !key) return NextResponse.json({ error: 'missing fields' }, { status: 400 });
+  if (!address || !signature || !nonce || !key)
+    return NextResponse.json({ error: "missing fields" }, { status: 400 });
 
   const message = `Sign this nonce: ${nonce}`;
   let recovered: string;
   try {
     recovered = recoverAddress(message, signature);
   } catch {
-    return NextResponse.json({ error: 'invalid signature' }, { status: 400 });
+    return NextResponse.json({ error: "invalid signature" }, { status: 400 });
   }
 
   if (recovered.toLowerCase() !== address.toLowerCase()) {
-    return NextResponse.json({ error: 'signature does not match address' }, { status: 400 });
+    return NextResponse.json(
+      { error: "signature does not match address" },
+      { status: 400 }
+    );
   }
 
-  const ok = verifyAndConsumeNonce(key, nonce);
-  if (!ok) return NextResponse.json({ error: 'invalid or expired nonce' }, { status: 400 });
+  const ok = await verifyAndConsumeNonceFromDB(key, nonce);
+  if (!ok)
+    return NextResponse.json(
+      { error: "invalid or expired nonce" },
+      { status: 400 }
+    );
 
-  // If APPWRITE_API_KEY present, attempt to create a JWT for the user
-  const apiKey = process.env.APPWRITE_API_KEY;
-  const project = process.env.APPWRITE_PROJECT;
+  try {
+    const { adminClient, config } = AppwriteSDK;
+    const users = new (require("node-appwrite").Users)(adminClient);
 
-  if (apiKey && project) {
-    try {
-      // create a server-side client with key
-      // appwrite SDK exposes createJWT on Users in some versions; we will call REST fallback
-            // For now return token-like object
-      const token = `appwrite-token:${address.toLowerCase()}`;
-      return NextResponse.json({ token });
-    } catch {
-      return NextResponse.json({ error: 'failed to mint token' }, { status: 500 });
+    // Check if user exists
+    let user;
+    const existingUsers = await users.list([Query.equal("name", address)]);
+
+    if (existingUsers.total > 0) {
+      user = existingUsers.users[0];
+    } else {
+      // Create user if not exists
+      user = await users.create(ID.unique(), undefined, undefined, undefined, address);
     }
-  }
 
-  // Fallback placeholder token
-  const customToken = `custom-token-for-${address.toLowerCase()}`;
-  return NextResponse.json({ token: customToken });
+    // Create a session for the user and return a session token
+    const account = new (require("node-appwrite").Account)(adminClient);
+    const session = await account.createMagicURLToken(user.$id, address);
+
+    return NextResponse.json({ token: session.secret });
+  } catch (error) {
+    console.error("Error during Appwrite user creation/session:", error);
+    return NextResponse.json(
+      { error: "failed to create session" },
+      { status: 500 }
+    );
+  }
 }
