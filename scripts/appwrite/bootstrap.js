@@ -1,18 +1,18 @@
 // Bootstrap complete Appwrite database, collections, storage, and config data
-// Requires env: APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY, APPWRITE_DATABASE_ID
+// Requires env: NEXT_PUBLIC_APPWRITE_ENDPOINT, NEXT_PUBLIC_APPWRITE_PROJECT_ID, APPWRITE_API_KEY, NEXT_PUBLIC_APPWRITE_DATABASE_ID
 
 // Use the Node.js server SDK for administrative operations
 // and CommonJS require so this file runs with `node` without ESM config
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { Client, Databases, Storage, Permission, Role } = require('node-appwrite');
 
-const endpoint = process.env.APPWRITE_ENDPOINT;
-const projectId = process.env.APPWRITE_PROJECT_ID;
+const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
+const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID;
 const apiKey = process.env.APPWRITE_API_KEY;
-const databaseId = process.env.APPWRITE_DATABASE_ID || "lancerwallet_db";
+const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || "lancerwallet_db";
 
 if (!endpoint || !projectId || !apiKey) {
-  console.error("Missing required env: APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY");
+  console.error("Missing required env: NEXT_PUBLIC_APPWRITE_ENDPOINT, NEXT_PUBLIC_APPWRITE_PROJECT_ID, APPWRITE_API_KEY");
   process.exit(1);
 }
 

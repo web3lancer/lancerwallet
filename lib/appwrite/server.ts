@@ -1,13 +1,16 @@
-import { Client, Account, Databases } from 'appwrite';
+import {
+  Account,
+  Client,
+  Databases,
+} from 'appwrite';
 import { cookies } from 'next/headers';
 
 // Environment variables
 const appwriteEndpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
-const appwriteProjectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
+const appwriteProjectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
 const appwriteDatabaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const appwriteCollectionId = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID!;
 
-if (!appwriteEndpoint || !appwriteProjectId || !appwriteDatabaseId || !appwriteCollectionId) {
+if (!appwriteEndpoint || !appwriteProjectId || !appwriteDatabaseId) {
   throw new Error('Appwrite environment variables are not set. Please check your .env.local file.');
 }
 

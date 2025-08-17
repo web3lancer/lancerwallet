@@ -1,12 +1,17 @@
-import { Client, Account, Databases, Avatars } from 'appwrite';
+import {
+  Account,
+  Avatars,
+  Client,
+  Databases,
+} from 'appwrite';
 
 // Environment variables
 const appwriteEndpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
-const appwriteProjectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
+const appwriteProjectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
 const appwriteDatabaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const appwriteCollectionId = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID!;
+// Remove appwriteCollectionId, collections are now referenced by ID per schema
 
-if (!appwriteEndpoint || !appwriteProjectId || !appwriteDatabaseId || !appwriteCollectionId) {
+if (!appwriteEndpoint || !appwriteProjectId || !appwriteDatabaseId) {
   throw new Error('Appwrite environment variables are not set. Please check your .env.local file.');
 }
 
@@ -26,17 +31,18 @@ const adminDatabases = new Databases(adminClient);
 
 // Export a structured SDK object
 export const AppwriteSDK = {
-  // Config
   config: {
     databaseId: appwriteDatabaseId,
-    collectionId: appwriteCollectionId,
+    // Add collection IDs as needed, e.g. users, wallets, etc.
+    usersCollectionId: process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!,
+    walletsCollectionId: process.env.NEXT_PUBLIC_APPWRITE_WALLETS_COLLECTION_ID!,
+    transactionsCollectionId: process.env.NEXT_PUBLIC_APPWRITE_TRANSACTIONS_COLLECTION_ID!,
+    tokensCollectionId: process.env.NEXT_PUBLIC_APPWRITE_TOKENS_COLLECTION_ID!,
+    nftsCollectionId: process.env.NEXT_PUBLIC_APPWRITE_NFTS_COLLECTION_ID!,
+    // Add others as needed
   },
-
-  // Base clients
   client,
   adminClient,
-
-  // Services
   account,
   adminDatabases,
   avatars: new Avatars(client),
