@@ -3,8 +3,8 @@
 import React from 'react';
 import { useStore } from '@/lib/store';
 import Link from 'next/link';
-import { Button } from '@/app/components/ui/Button';
-import { Card } from '@/app/components/ui/Card';
+import Button from '@/app/components/ui/Button';
+import Card from '@/app/components/ui/Card';
 
 export default function HomePage() {
   const { user, wallets, password } = useStore();

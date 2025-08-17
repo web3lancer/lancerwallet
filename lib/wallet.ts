@@ -150,7 +150,7 @@ export async function saveEncryptedWallet(walletData: WalletData, userPassword: 
   }
 
   const encryptedWallet = encryptData(walletData, userPassword);
-  const databases = await AppwriteSDK.databases;
+  const databases = AppwriteSDK.adminDatabases;
 
   await databases.createDocument(
     AppwriteSDK.config.databaseId,
@@ -172,7 +172,7 @@ export async function saveEncryptedWallet(walletData: WalletData, userPassword: 
  * @returns A promise that resolves to an array of wallet data.
  */
 export async function getDecryptedWallets(userPassword: string, userId: string): Promise<WalletData[]> {
-  const databases = await AppwriteSDK.databases;
+  const databases = AppwriteSDK.adminDatabases;
   const response = await databases.listDocuments(
     AppwriteSDK.config.databaseId,
     AppwriteSDK.config.collectionId,
@@ -199,7 +199,7 @@ export async function getDecryptedWallets(userPassword: string, userId: string):
  * @param userId The ID of the logged-in user.
  */
 export async function deleteWallet(address: string, userId: string): Promise<void> {
-    const databases = await AppwriteSDK.databases;
+    const databases = AppwriteSDK.adminDatabases;
     const response = await databases.listDocuments(
         AppwriteSDK.config.databaseId,
         AppwriteSDK.config.collectionId,

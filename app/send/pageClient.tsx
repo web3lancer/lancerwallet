@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { sendTransaction } from '@/lib/wallet';
 import { ethers } from 'ethers';
-import { Button } from '@/app/components/ui/Button';
-import { Input } from '@/app/components/ui/Input';
-import { Card } from '@/app/components/ui/Card';
+import Button from '@/app/components/ui/Button';
+import Input from '@/app/components/ui/Input';
+import Card from '@/app/components/ui/Card';
 
 export default function SendPageClient() {
   const searchParams = useSearchParams();

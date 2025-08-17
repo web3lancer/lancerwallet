@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Button } from '@/app/components/ui/Button';
-import { Input } from '@/app/components/ui/Input';
-import { Card } from '@/app/components/ui/Card';
+import Button from '@/app/components/ui/Button';
+import Input from '@/app/components/ui/Input';
+import Card from '@/app/components/ui/Card';
 
 export default function WalletsPageClient() {
   const {

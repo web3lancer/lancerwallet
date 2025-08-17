@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { getLoggedInUser } from '@/app/auth/actions';
 import { Models } from 'appwrite';
-import { Skeleton } from './ui/Skeleton'; // A loading skeleton
+import Skeleton from './ui/Skeleton'; // A loading skeleton
 
 export default function SessionProvider({ children }: { children: React.ReactNode }) {
   const { setUser } = useStore();

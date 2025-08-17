@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Logo from '../components/Logo';
-import { generateMnemonic, validateMnemonic, createWalletFromMnemonic, saveWalletToStorage } from '../../lib/wallet';
+import { generateMnemonic, validateMnemonic, createWalletFromMnemonic, saveEncryptedWallet } from '../../lib/wallet';
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
@@ -42,7 +42,10 @@ export default function Onboarding() {
     setError(null);
     try {
       const wallet = await createWalletFromMnemonic(mnemonic);
-      saveWalletToStorage(wallet);
+      // TODO: Replace with actual password and userId
+const password = '';
+const userId = '';
+await saveEncryptedWallet(wallet, password, userId);
       
       // Save mnemonic to localStorage for this session
       localStorage.setItem('mnemonic', mnemonic);
@@ -76,7 +79,10 @@ export default function Onboarding() {
       }
       
       const wallet = await createWalletFromMnemonic(inputMnemonic);
-      saveWalletToStorage(wallet);
+      // TODO: Replace with actual password and userId
+const password = '';
+const userId = '';
+await saveEncryptedWallet(wallet, password, userId);
       
       // Save mnemonic to localStorage for this session
       localStorage.setItem('mnemonic', inputMnemonic);

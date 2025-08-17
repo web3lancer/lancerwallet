@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { getWalletsFromStorage, WalletData } from '../../lib/wallet';
+import { getDecryptedWallets, WalletData } from '../../lib/wallet';
 
 interface NFTItem {
   id: string;
@@ -25,17 +25,24 @@ export default function NFTPageClient() {
 
   useEffect(() => {
     const loadWallets = () => {
-      const storedWallets = getWalletsFromStorage();
-      setWallets(storedWallets);
-      
-      if (walletParam) {
-        const wallet = storedWallets.find(w => w.address === walletParam);
-        if (wallet) {
-          setSelectedWallet(wallet.address);
-        }
-      } else if (storedWallets.length > 0) {
-        setSelectedWallet(storedWallets[0].address);
-      }
+// Replace with Appwrite-based wallet fetch
+const fetchWallets = async () => {
+  // You need to provide password and userId from context or props
+  const password = '';
+  const userId = '';
+  const storedWallets = await getDecryptedWallets(password, userId);
+  setWallets(storedWallets);
+
+  if (walletParam) {
+    const wallet = storedWallets.find((w: WalletData) => w.address === walletParam);
+    if (wallet) {
+      setSelectedWallet(wallet.address);
+    }
+  } else if (storedWallets.length > 0) {
+    setSelectedWallet(storedWallets[0].address);
+  }
+};
+fetchWallets();
     };
 
     loadWallets();

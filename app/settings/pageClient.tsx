@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from 'react';
 import ThemeSelector from "../components/ThemeSelector";
-import { getWalletsFromStorage } from '../../lib/wallet';
 
 interface SettingToggle {
   id: string;
@@ -108,7 +107,7 @@ export default function SettingsPageClient() {
 
   const handleBackup = () => {
     try {
-      const wallets = getWalletsFromStorage();
+      const wallets = JSON.parse(localStorage.getItem('wallets') || '[]');
       const mnemonic = localStorage.getItem('mnemonic');
       
       if (!mnemonic) {
@@ -118,7 +117,7 @@ export default function SettingsPageClient() {
 
       const backupData = {
         mnemonic,
-        wallets: wallets.map(w => ({ ...w, privateKey: undefined })), // Remove private keys for security
+        wallets: wallets.map((w: import('../../lib/wallet').WalletData) => ({ ...w, privateKey: undefined })), // Remove private keys for security
         timestamp: new Date().toISOString(),
         version: '1.0'
       };
@@ -160,8 +159,8 @@ export default function SettingsPageClient() {
           
           // Restore wallets (they will be re-saved with current balances)
           backupData.wallets.forEach((wallet: { address: string }) => {
-            const existingWallets = getWalletsFromStorage();
-            if (!existingWallets.find(w => w.address === wallet.address)) {
+const existingWallets = JSON.parse(localStorage.getItem('wallets') || '[]');
+if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.address === wallet.address)) {
               localStorage.setItem('wallets', JSON.stringify([...existingWallets, wallet]));
             }
           });

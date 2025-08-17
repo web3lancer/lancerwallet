@@ -1,6 +1,7 @@
 "use server";
 
 import { AppwriteSDK, ID } from '@/lib/appwrite';
+import { getSessionAccount } from '@/lib/appwrite/server';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { AppwriteException } from 'appwrite';
@@ -10,7 +11,7 @@ export async function signup(email: string, password: string) {
     await AppwriteSDK.account.create(ID.unique(), email, password);
     const session = await AppwriteSDK.account.createEmailPasswordSession(email, password);
 
-    cookies().set('appwrite-session', session.secret, {
+    (await cookies()).set('appwrite-session', session.secret, {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -35,7 +36,7 @@ export async function login(email: string, password: string) {
   try {
     const session = await AppwriteSDK.account.createEmailPasswordSession(email, password);
 
-    cookies().set('appwrite-session', session.secret, {
+    (await cookies()).set('appwrite-session', session.secret, {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -52,20 +53,20 @@ export async function login(email: string, password: string) {
 
 export async function logout() {
   try {
-    const sessionAccount = await AppwriteSDK.getSessionAccount();
+    const sessionAccount = await getSessionAccount();
     await sessionAccount.deleteSession('current');
   } catch (_error: unknown) {
     // We can ignore the error, as we are deleting the cookie anyway
   } finally {
     // Always attempt to delete the cookie and redirect
-    cookies().delete('appwrite-session');
+    (await cookies()).delete('appwrite-session');
     redirect('/auth');
   }
 }
 
 export async function getLoggedInUser() {
     try {
-        const sessionAccount = await AppwriteSDK.getSessionAccount();
+        const sessionAccount = await getSessionAccount();
         const user = await sessionAccount.get();
         return { user };
     } catch (_error) {

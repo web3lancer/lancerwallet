@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { Button } from '@/app/components/ui/Button';
-import { Input } from '@/app/components/ui/Input';
+import Button from '@/app/components/ui/Button';
+import Input from '@/app/components/ui/Input';
 import { login, signup } from './actions';
 
 export default function AuthForm() {
