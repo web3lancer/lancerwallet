@@ -1,56 +1,12 @@
-# TODO
+# LancerWallet TODO
 
-- Design core architecture and module system
-- Define plugin/extension system architecture
-- Setup monorepo structure with workspaces
-- Setup Appwrite project and configure authentication
-- Design and create Appwrite database collections schema
-- Implement user management and profiles system
-- Implement OAuth providers (Google, GitHub, Discord)
-- Create biometric authentication support
-- Design wallet core cryptographic engine
-- Implement secure key generation and storage
-- Create mnemonic phrase generation and validation
-- Implement Ethereum/EVM chain support
-- Implement Solana chain support
-- Create Bitcoin support module
-- Design chain abstraction layer for new blockchains
-- Create design system and component library
-- Build responsive wallet dashboard
-- Implement dark/light theme system
-- Create multi-wallet management system
-- Implement wallet import/export functionality
-- Build hardware wallet integration (Ledger, Trezor)
-- Create transaction building and signing system
-- Implement transaction history and tracking
-- Build gas estimation and fee optimization
-- Create DEX aggregator integration
-- Implement token swapping functionality
-- Build DeFi protocol integrations (Uniswap, 1inch)
-- Setup Turborepo monorepo with workspace configuration
-- Configure TypeScript project references and paths
-- Setup ESLint, Prettier, and Husky pre-commit hooks
-- Configure Jest and Testing Library for unit tests
-- Setup Storybook for component development
-- Create core package with TypeScript interfaces
-- Implement event system for module communication
-- Create dependency injection container
-- Build configuration management system
-- Implement logging and error handling utilities
-- Create storage abstraction layer
-- Implement encrypted local storage adapter
-- Build Appwrite storage adapter
-- Create IndexedDB adapter for large data
-- Implement secure session storage
-- Build token management and metadata system
-- Implement token price feeds integration
-- Create token balance aggregation system
-- Build token list management (CoinGecko, 1inch)
-- Implement NFT detection and metadata
-- Create WalletConnect v2 integration
-- Build dApp connection management
-- Implement dApp permission system
-- Create deep linking support for mobile
-- Setup analytics and crash reporting
-- Implement privacy-compliant user tracking
-- Create performance monitoring dashboard
+This file tracks the current development plan.
+
+## Current Task: Implement Secure, Encrypted Wallet Storage with Appwrite
+
+- [ ] **Install Dependencies:** Install `crypto-js` for encryption.
+- [ ] **Implement User Authentication:** Create `/auth` page for login/signup with Appwrite.
+- [ ] **Create Encryption Service:** Build `lib/crypto.ts` to handle AES encryption/decryption.
+- [ ] **Integrate Encrypted Storage:** Refactor `lib/wallet.ts` to use Appwrite's database instead of `localStorage`.
+- [ ] **Refactor UI:** Protect pages and fetch data from Appwrite after login.
+- [ ] **Verify:** Lint the code and manually test the entire flow.

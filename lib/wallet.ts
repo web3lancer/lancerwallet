@@ -1,4 +1,7 @@
 import { ethers } from 'ethers';
+import { AppwriteSDK, ID } from './appwrite';
+import { encryptData, decryptData } from './crypto';
+import { Query } from 'appwrite';
 
 export interface WalletData {
   address: string;
@@ -135,65 +138,85 @@ export async function sendTransaction(
   }
 }
 
-// Storage utilities for wallets
-export function saveWalletToStorage(wallet: WalletData): void {
-  const wallets = getWalletsFromStorage();
-  const updatedWallets = wallets.filter(w => w.address !== wallet.address);
-  updatedWallets.push(wallet);
-  localStorage.setItem('wallets', JSON.stringify(updatedWallets));
-}
-
-export function getWalletsFromStorage(): WalletData[] {
-  try {
-    const walletsData = localStorage.getItem('wallets');
-    return walletsData ? JSON.parse(walletsData) : [];
-  } catch {
-    return [];
+/**
+ * Saves an encrypted wallet to the Appwrite database for the current user.
+ * @param walletData The wallet data to save. The private key should be included.
+ * @param userPassword The user's password, used for encryption.
+ * @param userId The ID of the logged-in user.
+ */
+export async function saveEncryptedWallet(walletData: WalletData, userPassword: string, userId: string): Promise<void> {
+  if (!walletData.privateKey) {
+    throw new Error('Private key is required to save an encrypted wallet.');
   }
-}
 
-export function removeWalletFromStorage(address: string): void {
-  const wallets = getWalletsFromStorage();
-  const updatedWallets = wallets.filter(w => w.address !== address);
-  localStorage.setItem('wallets', JSON.stringify(updatedWallets));
-}
+  const encryptedWallet = encryptData(walletData, userPassword);
+  const databases = await AppwriteSDK.databases;
 
-// Get total portfolio value
-export async function getPortfolioValue(): Promise<{ totalValue: number; change24h: number }> {
-  const wallets = getWalletsFromStorage();
-  let totalValue = 0;
-  
-  for (const wallet of wallets) {
-    const { balanceUSD } = await getWalletBalance(wallet.address, wallet.network);
-    totalValue += balanceUSD;
-  }
-  
-  // Mock 24h change (in real app, compare with stored historical data)
-  const change24h = Math.random() * 10 - 5; // Random between -5% and +5%
-  
-  return { totalValue, change24h };
-}
-
-// Get token balances for an address (requires token contract calls)
-export async function getTokenBalances(): Promise<TokenBalance[]> {
-  // This would require calling various token contracts
-  // For now, return common tokens with zero balance
-  return [
+  await databases.createDocument(
+    AppwriteSDK.config.databaseId,
+    AppwriteSDK.config.collectionId,
+    ID.unique(),
     {
-      symbol: 'USDC',
-      name: 'USD Coin',
-      balance: '0',
-      balanceUSD: 0,
-      decimals: 6,
-      contractAddress: '0xA0b86a33E6441e81Ac966eeD02C5E57c7d0fB5E5'
-    },
-    {
-      symbol: 'USDT',
-      name: 'Tether USD',
-      balance: '0',
-      balanceUSD: 0,
-      decimals: 6,
-      contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+      userId,
+      address: walletData.address,
+      network: walletData.network,
+      encryptedWalletData: encryptedWallet,
     }
-  ];
+  );
+}
+
+/**
+ * Retrieves and decrypts all wallets for the current user from Appwrite.
+ * @param userPassword The user's password, used for decryption.
+ * @param userId The ID of the logged-in user.
+ * @returns A promise that resolves to an array of wallet data.
+ */
+export async function getDecryptedWallets(userPassword: string, userId: string): Promise<WalletData[]> {
+  const databases = await AppwriteSDK.databases;
+  const response = await databases.listDocuments(
+    AppwriteSDK.config.databaseId,
+    AppwriteSDK.config.collectionId,
+    [Query.equal('userId', userId)]
+  );
+
+  const decryptedWallets = response.documents.map(doc => {
+    const decrypted = decryptData<WalletData>(doc.encryptedWalletData, userPassword);
+    if (!decrypted) {
+      // This can happen if the password is wrong or data is corrupt.
+      // We'll log an error and filter this wallet out.
+      console.error(`Failed to decrypt wallet ${doc.address}. The password may be incorrect.`);
+      return null;
+    }
+    return decrypted;
+  }).filter((w): w is WalletData => w !== null);
+
+  return decryptedWallets;
+}
+
+/**
+ * Deletes a wallet from the Appwrite database.
+ * @param address The address of the wallet to delete.
+ * @param userId The ID of the logged-in user.
+ */
+export async function deleteWallet(address: string, userId: string): Promise<void> {
+    const databases = await AppwriteSDK.databases;
+    const response = await databases.listDocuments(
+        AppwriteSDK.config.databaseId,
+        AppwriteSDK.config.collectionId,
+        [
+            Query.equal('userId', userId),
+            Query.equal('address', address),
+        ]
+    );
+
+    if (response.documents.length === 0) {
+        throw new Error('Wallet not found for the current user.');
+    }
+
+    const documentId = response.documents[0].$id;
+    await databases.deleteDocument(
+        AppwriteSDK.config.databaseId,
+        AppwriteSDK.config.collectionId,
+        documentId
+    );
 }
