@@ -22,6 +22,45 @@ const client = new Client().setEndpoint(endpoint).setProject(projectId).setKey(a
 const db = new Databases(client);
 const storage = new Storage(client);
 
+// Small helper to wait for Appwrite to finish creating attributes and indexes
+async function sleep(ms) { return new Promise((res) => setTimeout(res, ms)); }
+
+async function waitForAttributeAvailable(collectionId, key, { timeoutMs = 60000, intervalMs = 500 } = {}) {
+  const start = Date.now();
+  // Poll until attribute status becomes 'available'
+  // This avoids race conditions where indexing starts before attribute is ready
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      const attr = await db.getAttribute(databaseId, collectionId, key);
+      if (attr && attr.status === 'available') return;
+    } catch (e) {
+      // Swallow transient not-found during propagation
+    }
+    if (Date.now() - start > timeoutMs) {
+      throw new Error(`Timeout waiting for attribute ${collectionId}.${key} to become available`);
+    }
+    await sleep(intervalMs);
+  }
+}
+
+async function waitForIndexAvailable(collectionId, key, { timeoutMs = 60000, intervalMs = 500 } = {}) {
+  const start = Date.now();
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      const idx = await db.getIndex(databaseId, collectionId, key);
+      if (idx && idx.status === 'available') return;
+    } catch (e) {
+      // ignore until exists
+    }
+    if (Date.now() - start > timeoutMs) {
+      throw new Error(`Timeout waiting for index ${collectionId}.${key} to become available`);
+    }
+    await sleep(intervalMs);
+  }
+}
+
 async function ensureDatabase() {
   try {
     await db.get(databaseId);
@@ -42,61 +81,107 @@ async function ensureCollection(collectionId, name, permissions = undefined, doc
   }
 }
 
-async function ensureStringAttribute(collectionId, key, size, required = true, array = false, defaultValue = undefined, isUnique = false) {
+async function ensureStringAttribute(collectionId, key, size, required = true, array = false, defaultValue = undefined, encrypt = false) {
   try {
-    await db.getAttribute(databaseId, collectionId, key);
+    const existing = await db.getAttribute(databaseId, collectionId, key);
+    if (!existing || existing.status !== 'available') {
+      await waitForAttributeAvailable(collectionId, key);
+    }
   } catch (e) {
     console.log(`Adding string attribute: ${collectionId}.${key}`);
-    await db.createStringAttribute(databaseId, collectionId, key, size, required, defaultValue, array, isUnique);
+    await db.createStringAttribute(databaseId, collectionId, key, size, required, defaultValue, array, encrypt);
+    await waitForAttributeAvailable(collectionId, key);
   }
 }
 
-async function ensureIntegerAttribute(collectionId, key, required = true, array = false, min = undefined, max = undefined, defaultValue = undefined) {
-  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+async function ensureIntegerAttribute(collectionId, key, required = true, array = false, min = undefined, max = undefined, defaultValue = undefined, encrypt = false) {
+  try {
+    const existing = await db.getAttribute(databaseId, collectionId, key);
+    if (!existing || existing.status !== 'available') {
+      await waitForAttributeAvailable(collectionId, key);
+    }
+  } catch (e) {
     console.log(`Adding integer attribute: ${collectionId}.${key}`);
-    await db.createIntegerAttribute(databaseId, collectionId, key, required, min, max, defaultValue, array);
+    await db.createIntegerAttribute(databaseId, collectionId, key, required, min, max, defaultValue, array, encrypt);
+    await waitForAttributeAvailable(collectionId, key);
   }
 }
 
-async function ensureBooleanAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
-  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+async function ensureBooleanAttribute(collectionId, key, required = true, array = false, defaultValue = undefined, encrypt = false) {
+  try {
+    const existing = await db.getAttribute(databaseId, collectionId, key);
+    if (!existing || existing.status !== 'available') {
+      await waitForAttributeAvailable(collectionId, key);
+    }
+  } catch (e) {
     console.log(`Adding boolean attribute: ${collectionId}.${key}`);
-    await db.createBooleanAttribute(databaseId, collectionId, key, required, defaultValue, array);
+    await db.createBooleanAttribute(databaseId, collectionId, key, required, defaultValue, array, encrypt);
+    await waitForAttributeAvailable(collectionId, key);
   }
 }
 
-async function ensureEmailAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
-  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+async function ensureEmailAttribute(collectionId, key, required = true, array = false, defaultValue = undefined, encrypt = false) {
+  try {
+    const existing = await db.getAttribute(databaseId, collectionId, key);
+    if (!existing || existing.status !== 'available') {
+      await waitForAttributeAvailable(collectionId, key);
+    }
+  } catch (e) {
     console.log(`Adding email attribute: ${collectionId}.${key}`);
-    await db.createEmailAttribute(databaseId, collectionId, key, required, defaultValue, array);
+    await db.createEmailAttribute(databaseId, collectionId, key, required, defaultValue, array, encrypt);
+    await waitForAttributeAvailable(collectionId, key);
   }
 }
 
-async function ensureUrlAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
-  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+async function ensureUrlAttribute(collectionId, key, required = true, array = false, defaultValue = undefined, encrypt = false) {
+  try {
+    const existing = await db.getAttribute(databaseId, collectionId, key);
+    if (!existing || existing.status !== 'available') {
+      await waitForAttributeAvailable(collectionId, key);
+    }
+  } catch (e) {
     console.log(`Adding URL attribute: ${collectionId}.${key}`);
-    await db.createUrlAttribute(databaseId, collectionId, key, required, defaultValue, array);
+    await db.createUrlAttribute(databaseId, collectionId, key, required, defaultValue, array, encrypt);
+    await waitForAttributeAvailable(collectionId, key);
   }
 }
 
-async function ensureDatetimeAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
-  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+async function ensureDatetimeAttribute(collectionId, key, required = true, array = false, defaultValue = undefined, encrypt = false) {
+  try {
+    const existing = await db.getAttribute(databaseId, collectionId, key);
+    if (!existing || existing.status !== 'available') {
+      await waitForAttributeAvailable(collectionId, key);
+    }
+  } catch (e) {
     console.log(`Adding datetime attribute: ${collectionId}.${key}`);
-    await db.createDatetimeAttribute(databaseId, collectionId, key, required, defaultValue, array);
+    await db.createDatetimeAttribute(databaseId, collectionId, key, required, defaultValue, array, encrypt);
+    await waitForAttributeAvailable(collectionId, key);
   }
 }
 
-async function ensureFloatAttribute(collectionId, key, required = true, array = false, min = undefined, max = undefined, defaultValue = undefined) {
-  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+async function ensureFloatAttribute(collectionId, key, required = true, array = false, min = undefined, max = undefined, defaultValue = undefined, encrypt = false) {
+  try {
+    const existing = await db.getAttribute(databaseId, collectionId, key);
+    if (!existing || existing.status !== 'available') {
+      await waitForAttributeAvailable(collectionId, key);
+    }
+  } catch (e) {
     console.log(`Adding float attribute: ${collectionId}.${key}`);
-    await db.createFloatAttribute(databaseId, collectionId, key, required, min, max, defaultValue, array);
+    await db.createFloatAttribute(databaseId, collectionId, key, required, min, max, defaultValue, array, encrypt);
+    await waitForAttributeAvailable(collectionId, key);
   }
 }
 
-async function ensureEnumAttribute(collectionId, key, elements, required = true, array = false, defaultValue = undefined) {
-  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+async function ensureEnumAttribute(collectionId, key, elements, required = true, array = false, defaultValue = undefined, encrypt = false) {
+  try {
+    const existing = await db.getAttribute(databaseId, collectionId, key);
+    if (!existing || existing.status !== 'available') {
+      await waitForAttributeAvailable(collectionId, key);
+    }
+  } catch (e) {
     console.log(`Adding enum attribute: ${collectionId}.${key}`);
-    await db.createEnumAttribute(databaseId, collectionId, key, elements, required, defaultValue, array);
+    await db.createEnumAttribute(databaseId, collectionId, key, elements, required, defaultValue, array, encrypt);
+    await waitForAttributeAvailable(collectionId, key);
   }
 }
 
@@ -106,6 +191,7 @@ async function ensureIndex(collectionId, key, type, attributes, orders = undefin
   } catch (e) {
     console.log(`Creating index: ${collectionId}.${key}`);
     await db.createIndex(databaseId, collectionId, key, type, attributes, orders);
+  await waitForIndexAvailable(collectionId, key);
   }
 }
 
@@ -157,16 +243,15 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.team("admin"))
   ]);
-  // Appwrite encrypted strings require a minimum size of 150 characters.
-  // Use 200 to be safely above the limit for any encrypted identifiers.
-  await ensureStringAttribute("users", "userId", 200, true, false, undefined, true);
+  // userId is a plain string (not encrypted). Size 100 per schema.
+  await ensureStringAttribute("users", "userId", 100, true, false, undefined, false);
   await ensureEmailAttribute("users", "email", true, false, undefined);
   await ensureStringAttribute("users", "displayName", 100, false);
   await ensureUrlAttribute("users", "profileImage", false);
   await ensureDatetimeAttribute("users", "lastLogin", false);
   // Appwrite does not allow setting a default on a required attribute.
   // Make accountStatus non-required so we can set a default value safely.
-  await ensureEnumAttribute("users", "accountStatus", ["active", "suspended", "deleted"], false, false, "active");
+  await ensureEnumAttribute("users", "accountStatus", ["active", "suspended", "deleted"], false, false, "active", false);
   await ensureDatetimeAttribute("users", "createdAt", true);
   await ensureDatetimeAttribute("users", "updatedAt", true);
   
@@ -182,12 +267,13 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("wallets", "walletId", 100, true, false, undefined, true);
+  await ensureStringAttribute("wallets", "walletId", 100, true, false, undefined, false);
   await ensureStringAttribute("wallets", "userId", 100, true);
   await ensureStringAttribute("wallets", "address", 100, true);
   await ensureStringAttribute("wallets", "name", 100, true);
   await ensureStringAttribute("wallets", "network", 50, true);
-  await ensureStringAttribute("wallets", "encryptedWalletData", 5000, true);
+  // Store encrypted wallet data using Appwrite's encrypted attribute (requires size >= 150)
+  await ensureStringAttribute("wallets", "encryptedWalletData", 5000, true, false, undefined, true);
   await ensureStringAttribute("wallets", "walletType", 50, true, false, "imported");
   await ensureBooleanAttribute("wallets", "isActive", true, false, true);
   await ensureDatetimeAttribute("wallets", "createdAt", true);
@@ -197,6 +283,8 @@ async function createMainCollections() {
   await ensureIndex("wallets", "address_idx", "unique", ["address"]);
   await ensureIndex("wallets", "network_idx", "key", ["network"]);
   await ensureIndex("wallets", "isActive_idx", "key", ["isActive"]);
+  await ensureIndex("wallets", "walletId_idx", "unique", ["walletId"]);
+  await ensureIndex("wallets", "createdAt_idx", "key", ["createdAt"]);
 
   // 3. Transactions Collection
   await ensureCollection("transactions", "Transactions", [
@@ -205,10 +293,10 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("transactions", "transactionId", 100, true, false, undefined, true);
+  await ensureStringAttribute("transactions", "transactionId", 100, true, false, undefined, false);
   await ensureStringAttribute("transactions", "userId", 100, true);
   await ensureStringAttribute("transactions", "walletId", 100, true);
-  await ensureStringAttribute("transactions", "hash", 100, true, false, undefined, true);
+  await ensureStringAttribute("transactions", "hash", 100, true, false, undefined, false);
   await ensureStringAttribute("transactions", "fromAddress", 100, true);
   await ensureStringAttribute("transactions", "toAddress", 100, true);
   await ensureStringAttribute("transactions", "value", 100, true);
@@ -229,6 +317,8 @@ async function createMainCollections() {
   await ensureIndex("transactions", "type_idx", "key", ["type"]);
   await ensureIndex("transactions", "network_idx", "key", ["network"]);
   await ensureIndex("transactions", "timestamp_idx", "key", ["timestamp"]);
+  await ensureIndex("transactions", "transactionId_idx", "unique", ["transactionId"]);
+  await ensureIndex("transactions", "createdAt_idx", "key", ["createdAt"]);
 
   // 4. Tokens Collection
   await ensureCollection("tokens", "Tokens", [
@@ -237,7 +327,7 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("tokens", "tokenId", 100, true, false, undefined, true);
+  await ensureStringAttribute("tokens", "tokenId", 100, true, false, undefined, false);
   await ensureStringAttribute("tokens", "userId", 100, true);
   await ensureStringAttribute("tokens", "walletId", 100, true);
   await ensureStringAttribute("tokens", "contractAddress", 100, true);
@@ -257,6 +347,8 @@ async function createMainCollections() {
   await ensureIndex("tokens", "symbol_idx", "key", ["symbol"]);
   await ensureIndex("tokens", "network_idx", "key", ["network"]);
   await ensureIndex("tokens", "isActive_idx", "key", ["isActive"]);
+  await ensureIndex("tokens", "tokenId_idx", "unique", ["tokenId"]);
+  await ensureIndex("tokens", "createdAt_idx", "key", ["createdAt"]);
 
   // 5. NFTs Collection
   await ensureCollection("nfts", "NFTs", [
@@ -265,7 +357,7 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("nfts", "nftId", 100, true, false, undefined, true);
+  await ensureStringAttribute("nfts", "nftId", 100, true, false, undefined, false);
   await ensureStringAttribute("nfts", "userId", 100, true);
   await ensureStringAttribute("nfts", "walletId", 100, true);
   await ensureStringAttribute("nfts", "contractAddress", 100, true);
@@ -288,6 +380,8 @@ async function createMainCollections() {
   await ensureIndex("nfts", "collection_idx", "key", ["collection"]);
   await ensureIndex("nfts", "network_idx", "key", ["network"]);
   await ensureIndex("nfts", "isActive_idx", "key", ["isActive"]);
+  await ensureIndex("nfts", "nftId_idx", "unique", ["nftId"]);
+  await ensureIndex("nfts", "createdAt_idx", "key", ["createdAt"]);
 
   // 6. WebAuthn Credentials Collection
   await ensureCollection("webauthn_credentials", "WebAuthn Credentials", [
@@ -311,6 +405,7 @@ async function createMainCollections() {
   await ensureIndex("webauthn_credentials", "credentialId_idx", "unique", ["credentialId"]);
   await ensureIndex("webauthn_credentials", "isActive_idx", "key", ["isActive"]);
   await ensureIndex("webauthn_credentials", "lastUsed_idx", "key", ["lastUsed"]);
+  await ensureIndex("webauthn_credentials", "createdAt_idx", "key", ["createdAt"]);
 
   // 7. DeFi Positions Collection
   await ensureCollection("defi_positions", "DeFi Positions", [
@@ -319,7 +414,7 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("defi_positions", "positionId", 100, true, false, undefined, true);
+  await ensureStringAttribute("defi_positions", "positionId", 100, true, false, undefined, false);
   await ensureStringAttribute("defi_positions", "userId", 100, true);
   await ensureStringAttribute("defi_positions", "walletId", 100, true);
   await ensureStringAttribute("defi_positions", "protocol", 50, true);
@@ -339,6 +434,8 @@ async function createMainCollections() {
   await ensureIndex("defi_positions", "positionType_idx", "key", ["positionType"]);
   await ensureIndex("defi_positions", "network_idx", "key", ["network"]);
   await ensureIndex("defi_positions", "isActive_idx", "key", ["isActive"]);
+  await ensureIndex("defi_positions", "positionId_idx", "unique", ["positionId"]);
+  await ensureIndex("defi_positions", "createdAt_idx", "key", ["createdAt"]);
 
   // 8. App Settings Collection
   await ensureCollection("app_settings", "App Settings", [
@@ -347,7 +444,7 @@ async function createMainCollections() {
     Permission.update(Role.team("admin")),
     Permission.delete(Role.team("admin"))
   ]);
-  await ensureStringAttribute("app_settings", "settingId", 100, true, false, undefined, true);
+  await ensureStringAttribute("app_settings", "settingId", 100, true, false, undefined, false);
   await ensureStringAttribute("app_settings", "key", 100, true, false, undefined, true);
   await ensureStringAttribute("app_settings", "value", 5000, true);
   await ensureStringAttribute("app_settings", "category", 50, true);
@@ -359,6 +456,7 @@ async function createMainCollections() {
   await ensureIndex("app_settings", "key_idx", "unique", ["key"]);
   await ensureIndex("app_settings", "category_idx", "key", ["category"]);
   await ensureIndex("app_settings", "isPublic_idx", "key", ["isPublic"]);
+  await ensureIndex("app_settings", "settingId_idx", "unique", ["settingId"]);
 
   // 9. User Settings Collection
   await ensureCollection("user_settings", "User Settings", [
@@ -367,8 +465,8 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("user_settings", "settingId", 100, true, false, undefined, true);
-  await ensureStringAttribute("user_settings", "userId", 100, true, false, undefined, true);
+  await ensureStringAttribute("user_settings", "settingId", 100, true, false, undefined, false);
+  await ensureStringAttribute("user_settings", "userId", 100, true, false, undefined, false);
   await ensureStringAttribute("user_settings", "theme", 20, true, false, "auto");
   await ensureStringAttribute("user_settings", "currency", 10, true, false, "USD");
   await ensureStringAttribute("user_settings", "language", 10, true, false, "en");
@@ -380,6 +478,7 @@ async function createMainCollections() {
   await ensureDatetimeAttribute("user_settings", "updatedAt", true);
 
   await ensureIndex("user_settings", "userId_idx", "unique", ["userId"]);
+  await ensureIndex("user_settings", "settingId_idx", "unique", ["settingId"]);
 
   // 10. Price Alerts Collection
   await ensureCollection("price_alerts", "Price Alerts", [
@@ -388,7 +487,7 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("price_alerts", "alertId", 100, true, false, undefined, true);
+  await ensureStringAttribute("price_alerts", "alertId", 100, true, false, undefined, false);
   await ensureStringAttribute("price_alerts", "userId", 100, true);
   await ensureStringAttribute("price_alerts", "symbol", 20, true);
   await ensureStringAttribute("price_alerts", "contractAddress", 100, false);
@@ -407,6 +506,7 @@ async function createMainCollections() {
   await ensureIndex("price_alerts", "symbol_idx", "key", ["symbol"]);
   await ensureIndex("price_alerts", "isActive_idx", "key", ["isActive"]);
   await ensureIndex("price_alerts", "triggered_idx", "key", ["triggered"]);
+  await ensureIndex("price_alerts", "alertId_idx", "unique", ["alertId"]);
 
   // 11. Hardware Wallets Collection
   await ensureCollection("hardware_wallets", "Hardware Wallets", [
@@ -415,7 +515,7 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("hardware_wallets", "hardwareWalletId", 100, true, false, undefined, true);
+  await ensureStringAttribute("hardware_wallets", "hardwareWalletId", 100, true, false, undefined, false);
   await ensureStringAttribute("hardware_wallets", "userId", 100, true);
   await ensureStringAttribute("hardware_wallets", "deviceType", 50, true);
   await ensureStringAttribute("hardware_wallets", "deviceModel", 50, false);
@@ -433,6 +533,7 @@ async function createMainCollections() {
   await ensureIndex("hardware_wallets", "deviceId_idx", "key", ["deviceId"]);
   await ensureIndex("hardware_wallets", "deviceType_idx", "key", ["deviceType"]);
   await ensureIndex("hardware_wallets", "isActive_idx", "key", ["isActive"]);
+  await ensureIndex("hardware_wallets", "hardwareWalletId_idx", "unique", ["hardwareWalletId"]);
 
   // 12. Plugin Configurations Collection
   await ensureCollection("plugin_configurations", "Plugin Configurations", [
@@ -441,7 +542,7 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("plugin_configurations", "configId", 100, true, false, undefined, true);
+  await ensureStringAttribute("plugin_configurations", "configId", 100, true, false, undefined, false);
   await ensureStringAttribute("plugin_configurations", "userId", 100, true);
   await ensureStringAttribute("plugin_configurations", "pluginId", 100, true);
   await ensureStringAttribute("plugin_configurations", "pluginName", 100, true);
@@ -457,6 +558,7 @@ async function createMainCollections() {
   await ensureIndex("plugin_configurations", "pluginId_idx", "key", ["pluginId"]);
   await ensureIndex("plugin_configurations", "enabled_idx", "key", ["enabled"]);
   await ensureIndex("plugin_configurations", "lastUsed_idx", "key", ["lastUsed"]);
+  await ensureIndex("plugin_configurations", "configId_idx", "unique", ["configId"]);
 
   // 13. Backups Collection
   await ensureCollection("backups", "Backups", [
@@ -464,7 +566,7 @@ async function createMainCollections() {
     Permission.create(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("backups", "backupId", 100, true, false, undefined, true);
+  await ensureStringAttribute("backups", "backupId", 100, true, false, undefined, false);
   await ensureStringAttribute("backups", "userId", 100, true);
   await ensureStringAttribute("backups", "fileId", 100, true);
   await ensureStringAttribute("backups", "backupType", 30, true);
@@ -476,6 +578,7 @@ async function createMainCollections() {
   await ensureIndex("backups", "fileId_idx", "key", ["fileId"]);
   await ensureIndex("backups", "backupType_idx", "key", ["backupType"]);
   await ensureIndex("backups", "timestamp_idx", "key", ["timestamp"]);
+  await ensureIndex("backups", "backupId_idx", "unique", ["backupId"]);
 
   // 14. Nonces Collection
   await ensureCollection("nonces", "Nonces", [
@@ -484,8 +587,8 @@ async function createMainCollections() {
     Permission.update(Role.any()),
     Permission.delete(Role.team("admin"))
   ]);
-  await ensureStringAttribute("nonces", "nonceId", 100, true, false, undefined, true);
-  await ensureStringAttribute("nonces", "key", 100, true, false, undefined, true);
+  await ensureStringAttribute("nonces", "nonceId", 100, true, false, undefined, false);
+  await ensureStringAttribute("nonces", "key", 100, true, false, undefined, false);
   await ensureStringAttribute("nonces", "nonce", 100, true);
   await ensureDatetimeAttribute("nonces", "expiresAt", true);
   await ensureBooleanAttribute("nonces", "used", true, false, false);
@@ -495,6 +598,7 @@ async function createMainCollections() {
   await ensureIndex("nonces", "expiresAt_idx", "key", ["expiresAt"]);
   await ensureIndex("nonces", "used_idx", "key", ["used"]);
   await ensureIndex("nonces", "createdAt_idx", "key", ["createdAt"]);
+  await ensureIndex("nonces", "nonceId_idx", "unique", ["nonceId"]);
 
   console.log("Main collections created successfully!");
 }
@@ -502,7 +606,7 @@ async function createMainCollections() {
 async function createStorageBuckets() {
   console.log("Creating storage buckets...");
 
-  // 1. User Avatars Bucket
+  // 1. User Avatars Bucket (public read via signed URLs; writes scoped to user)
   await ensureStorageBucket(
     "user-avatars",
     "User Avatars",
@@ -512,7 +616,7 @@ async function createStorageBuckets() {
       Permission.update(Role.user("USER_ID")),
       Permission.delete(Role.user("USER_ID"))
     ],
-    true, // fileSecurity
+  true, // fileSecurity (enforce per-file permissions even though read can be public via signed URLs)
     true, // enabled
     5242880, // 5MB max
     ["jpg", "jpeg", "png", "gif", "webp"],
@@ -596,7 +700,7 @@ async function createStorageBuckets() {
     true
   );
 
-  // 6. Plugin Assets Bucket
+  // 6. Plugin Assets Bucket (public assets for discovery)
   await ensureStorageBucket(
     "plugin-assets",
     "Plugin Assets",
@@ -606,7 +710,7 @@ async function createStorageBuckets() {
       Permission.update(Role.team("admin")),
       Permission.delete(Role.team("admin"))
     ],
-    false,
+  false, // fileSecurity disabled for public assets
     true,
     104857600, // 100MB max
     ["jpg", "jpeg", "png", "svg", "json", "js", "zip"],
