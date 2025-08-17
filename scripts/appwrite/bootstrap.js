@@ -1,9 +1,12 @@
-// Bootstrap Appwrite config collections and seed defaults
+// Bootstrap complete Appwrite database, collections, storage, and config data
 // Requires env: APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY, APPWRITE_DATABASE_ID
 
 import {
   Client,
   Databases,
+  Storage,
+  Permission,
+  Role,
 } from 'appwrite';
 
 const endpoint = process.env.APPWRITE_ENDPOINT;
@@ -18,6 +21,17 @@ if (!endpoint || !projectId || !apiKey) {
 
 const client = new Client().setEndpoint(endpoint).setProject(projectId).setKey(apiKey);
 const db = new Databases(client);
+const storage = new Storage(client);
+
+async function ensureDatabase() {
+  try {
+    await db.get(databaseId);
+    console.log(`Database exists: ${databaseId}`);
+  } catch (e) {
+    console.log(`Creating database: ${databaseId}`);
+    await db.create(databaseId, "LancerWallet Database");
+  }
+}
 
 async function ensureCollection(collectionId, name, permissions = undefined) {
   try {
@@ -45,10 +59,57 @@ async function ensureIntegerAttribute(collectionId, key, required = true, array 
   }
 }
 
-async function ensureBooleanAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
+async function ensureEmailAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
   try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
-    console.log(`Adding boolean attribute: ${collectionId}.${key}`);
-    await db.createBooleanAttribute(databaseId, collectionId, key, required, defaultValue, array);
+    console.log(`Adding email attribute: ${collectionId}.${key}`);
+    await db.createEmailAttribute(databaseId, collectionId, key, required, defaultValue, array);
+  }
+}
+
+async function ensureUrlAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
+  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+    console.log(`Adding URL attribute: ${collectionId}.${key}`);
+    await db.createUrlAttribute(databaseId, collectionId, key, required, defaultValue, array);
+  }
+}
+
+async function ensureDatetimeAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
+  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+    console.log(`Adding datetime attribute: ${collectionId}.${key}`);
+    await db.createDatetimeAttribute(databaseId, collectionId, key, required, defaultValue, array);
+  }
+}
+
+async function ensureFloatAttribute(collectionId, key, required = true, array = false, min = undefined, max = undefined, defaultValue = undefined) {
+  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+    console.log(`Adding float attribute: ${collectionId}.${key}`);
+    await db.createFloatAttribute(databaseId, collectionId, key, required, min, max, defaultValue, array);
+  }
+}
+
+async function ensureEnumAttribute(collectionId, key, elements, required = true, array = false, defaultValue = undefined) {
+  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+    console.log(`Adding enum attribute: ${collectionId}.${key}`);
+    await db.createEnumAttribute(databaseId, collectionId, key, elements, required, defaultValue, array);
+  }
+}
+
+async function ensureIndex(collectionId, key, type, attributes, orders = undefined) {
+  try {
+    await db.getIndex(databaseId, collectionId, key);
+  } catch (e) {
+    console.log(`Creating index: ${collectionId}.${key}`);
+    await db.createIndex(databaseId, collectionId, key, type, attributes, orders);
+  }
+}
+
+async function ensureStorageBucket(bucketId, name, permissions, fileSecurity = true, enabled = true, maximumFileSize = undefined, allowedFileExtensions = undefined, compression = "none", encryption = true, antivirus = true) {
+  try {
+    await storage.getBucket(bucketId);
+    console.log(`Storage bucket exists: ${bucketId}`);
+  } catch (e) {
+    console.log(`Creating storage bucket: ${bucketId}`);
+    await storage.createBucket(bucketId, name, permissions, fileSecurity, enabled, maximumFileSize, allowedFileExtensions, compression, encryption, antivirus);
   }
 }
 
