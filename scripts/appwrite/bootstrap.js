@@ -385,9 +385,9 @@ async function createMainCollections() {
   // network is public blockchain data, not encrypted
   await ensureStringAttribute("tokens", "network", 50, true, false, undefined, false);
   // isNative is not encrypted - needed for filtering
-  await ensureBooleanAttribute("tokens", "isNative", true, false, false, false);
+  await ensureBooleanAttribute("tokens", "isNative", true, false, undefined, false);
   // isActive is not encrypted - needed for filtering
-  await ensureBooleanAttribute("tokens", "isActive", true, false, true, false);
+  await ensureBooleanAttribute("tokens", "isActive", true, false, undefined, false);
   // Timestamps are not encrypted - needed for system functionality
   await ensureDatetimeAttribute("tokens", "createdAt", true, false, undefined, false);
   await ensureDatetimeAttribute("tokens", "updatedAt", true, false, undefined, false);
@@ -602,9 +602,9 @@ async function createMainCollections() {
   // currentPrice is public market data, not encrypted
   await ensureFloatAttribute("price_alerts", "currentPrice", false, false, undefined, undefined, undefined, false);
   // isActive is not encrypted - needed for filtering
-  await ensureBooleanAttribute("price_alerts", "isActive", true, false, true, false);
+  await ensureBooleanAttribute("price_alerts", "isActive", true, false, undefined, false);
   // triggered is not encrypted - needed for filtering
-  await ensureBooleanAttribute("price_alerts", "triggered", true, false, false, false);
+  await ensureBooleanAttribute("price_alerts", "triggered", true, false, undefined, false);
   // triggeredAt is not encrypted - needed for functionality
   await ensureDatetimeAttribute("price_alerts", "triggeredAt", false, false, undefined, false);
   // Timestamps are not encrypted - needed for system functionality
@@ -643,7 +643,7 @@ async function createMainCollections() {
   // name is encrypted for user privacy
   await ensureStringAttribute("hardware_wallets", "name", 150, true, false, undefined, true);
   // isActive is not encrypted - needed for filtering
-  await ensureBooleanAttribute("hardware_wallets", "isActive", true, false, true, false);
+  await ensureBooleanAttribute("hardware_wallets", "isActive", true, false, undefined, false);
   // lastConnected is not encrypted - needed for functionality
   await ensureDatetimeAttribute("hardware_wallets", "lastConnected", false, false, undefined, false);
   // Timestamps are not encrypted - needed for system functionality
@@ -668,7 +668,7 @@ async function createMainCollections() {
   await ensureStringAttribute("plugin_configurations", "pluginId", 100, true);
   await ensureStringAttribute("plugin_configurations", "pluginName", 100, true);
   await ensureStringAttribute("plugin_configurations", "version", 20, true);
-  await ensureBooleanAttribute("plugin_configurations", "enabled", true, false, true);
+  await ensureBooleanAttribute("plugin_configurations", "enabled", true, false, undefined);
   await ensureStringAttribute("plugin_configurations", "configuration", 20000, true);
   await ensureStringAttribute("plugin_configurations", "permissions", 5000, false);
   await ensureDatetimeAttribute("plugin_configurations", "lastUsed", false);
@@ -719,7 +719,7 @@ async function createMainCollections() {
   await ensureStringAttribute("nonces", "key", 100, true, false, undefined, false);
   await ensureStringAttribute("nonces", "nonce", 100, true);
   await ensureDatetimeAttribute("nonces", "expiresAt", true);
-  await ensureBooleanAttribute("nonces", "used", true, false, false);
+  await ensureBooleanAttribute("nonces", "used", true, false, undefined);
   await ensureDatetimeAttribute("nonces", "createdAt", true);
 
   await ensureIndex("nonces", "key_idx", "unique", ["key"]);
