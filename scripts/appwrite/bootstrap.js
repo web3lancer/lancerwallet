@@ -248,7 +248,7 @@ async function createMainCollections() {
   // email is encrypted for user privacy
   await ensureEmailAttribute("users", "email", true, false, undefined, true);
   // displayName is encrypted for user privacy
-  await ensureStringAttribute("users", "displayName", 100, false, false, undefined, true);
+  await ensureStringAttribute("users", "displayName", 150, false, false, undefined, true);
   // profileImage URL is encrypted for user privacy
   await ensureUrlAttribute("users", "profileImage", false, false, undefined, true);
   // lastLogin is not encrypted - needed for functionality
@@ -280,7 +280,7 @@ async function createMainCollections() {
   // address is public blockchain data, not encrypted
   await ensureStringAttribute("wallets", "address", 100, true, false, undefined, false);
   // name is encrypted for user privacy
-  await ensureStringAttribute("wallets", "name", 100, true, false, undefined, true);
+  await ensureStringAttribute("wallets", "name", 150, true, false, undefined, true);
   // network is public blockchain data, not encrypted
   await ensureStringAttribute("wallets", "network", 50, true, false, undefined, false);
   // Store encrypted wallet data using Appwrite's encrypted attribute (requires size >= 150)
@@ -319,7 +319,7 @@ async function createMainCollections() {
   await ensureStringAttribute("transactions", "fromAddress", 100, true, false, undefined, false);
   await ensureStringAttribute("transactions", "toAddress", 100, true, false, undefined, false);
   // value is financial data, encrypted for privacy
-  await ensureStringAttribute("transactions", "value", 100, true, false, undefined, true);
+  await ensureStringAttribute("transactions", "value", 150, true, false, undefined, true);
   // network is public blockchain data, not encrypted
   await ensureStringAttribute("transactions", "network", 50, true, false, undefined, false);
   // status is not encrypted - needed for filtering
@@ -329,7 +329,7 @@ async function createMainCollections() {
   // timestamp is not encrypted - needed for filtering/sorting
   await ensureDatetimeAttribute("transactions", "timestamp", true, false, undefined, false);
   // notes are encrypted for user privacy
-  await ensureStringAttribute("transactions", "notes", 500, false, false, undefined, true);
+  await ensureStringAttribute("transactions", "notes", 150, false, false, undefined, true);
   // Timestamps are not encrypted - needed for system functionality
   await ensureDatetimeAttribute("transactions", "createdAt", true, false, undefined, false);
   await ensureDatetimeAttribute("transactions", "updatedAt", true, false, undefined, false);
@@ -368,7 +368,7 @@ async function createMainCollections() {
   // decimals is public blockchain data, not encrypted
   await ensureIntegerAttribute("tokens", "decimals", true, false, undefined, undefined, undefined, false);
   // balance is financial data, encrypted for privacy
-  await ensureStringAttribute("tokens", "balance", 100, true, false, undefined, true);
+  await ensureStringAttribute("tokens", "balance", 150, true, false, undefined, true);
   // network is public blockchain data, not encrypted
   await ensureStringAttribute("tokens", "network", 50, true, false, undefined, false);
   // isNative is not encrypted - needed for filtering
@@ -410,7 +410,7 @@ async function createMainCollections() {
   // description is encrypted for user privacy
   await ensureStringAttribute("nfts", "description", 2000, false, false, undefined, true);
   // imageStorageId is encrypted for user privacy
-  await ensureStringAttribute("nfts", "imageStorageId", 100, false, false, undefined, true);
+  await ensureStringAttribute("nfts", "imageStorageId", 150, false, false, undefined, true);
   // collection is public but can be filtered, not encrypted for functionality
   await ensureStringAttribute("nfts", "collection", 100, true, false, undefined, false);
   // standard is public blockchain data, not encrypted
@@ -447,11 +447,11 @@ async function createMainCollections() {
   // userId is a system reference, not encrypted
   await ensureStringAttribute("webauthn_credentials", "userId", 100, true, false, undefined, false);
   // publicKey is encrypted for user security
-  await ensureStringAttribute("webauthn_credentials", "publicKey", 1000, true, false, undefined, true);
+  await ensureStringAttribute("webauthn_credentials", "publicKey", 1500, true, false, undefined, true);
   // counter is not encrypted - needed for security validation
   await ensureIntegerAttribute("webauthn_credentials", "counter", true, false, undefined, undefined, 0, false);
   // deviceName is encrypted for user privacy
-  await ensureStringAttribute("webauthn_credentials", "deviceName", 100, false, false, undefined, true);
+  await ensureStringAttribute("webauthn_credentials", "deviceName", 150, false, false, undefined, true);
   // deviceType is not encrypted - needed for filtering
   await ensureEnumAttribute("webauthn_credentials", "deviceType", ["platform", "cross-platform"], false, false, undefined, false);
   // isActive is not encrypted - needed for filtering
@@ -492,7 +492,7 @@ async function createMainCollections() {
   // tokenB is public blockchain data, not encrypted
   await ensureStringAttribute("defi_positions", "tokenB", 20, false, false, undefined, false);
   // amount is financial data, encrypted for privacy
-  await ensureStringAttribute("defi_positions", "amount", 100, true, false, undefined, true);
+  await ensureStringAttribute("defi_positions", "amount", 150, true, false, undefined, true);
   // network is public blockchain data, not encrypted
   await ensureStringAttribute("defi_positions", "network", 50, true, false, undefined, false);
   // isActive is not encrypted - needed for filtering
@@ -620,15 +620,15 @@ async function createMainCollections() {
   // deviceModel is public hardware info, not encrypted
   await ensureStringAttribute("hardware_wallets", "deviceModel", 50, false, false, undefined, false);
   // deviceId is encrypted for user security
-  await ensureStringAttribute("hardware_wallets", "deviceId", 100, true, false, undefined, true);
+  await ensureStringAttribute("hardware_wallets", "deviceId", 150, true, false, undefined, true);
   // publicKey is encrypted for user security
-  await ensureStringAttribute("hardware_wallets", "publicKey", 1000, true, false, undefined, true);
+  await ensureStringAttribute("hardware_wallets", "publicKey", 1500, true, false, undefined, true);
   // derivationPath is encrypted for user security
-  await ensureStringAttribute("hardware_wallets", "derivationPath", 100, true, false, undefined, true);
+  await ensureStringAttribute("hardware_wallets", "derivationPath", 150, true, false, undefined, true);
   // addresses are encrypted for user privacy
   await ensureStringAttribute("hardware_wallets", "addresses", 5000, true, false, undefined, true);
   // name is encrypted for user privacy
-  await ensureStringAttribute("hardware_wallets", "name", 100, true, false, undefined, true);
+  await ensureStringAttribute("hardware_wallets", "name", 150, true, false, undefined, true);
   // isActive is not encrypted - needed for filtering
   await ensureBooleanAttribute("hardware_wallets", "isActive", true, false, true, false);
   // lastConnected is not encrypted - needed for functionality
@@ -679,7 +679,7 @@ async function createMainCollections() {
   // userId is a system reference, not encrypted
   await ensureStringAttribute("backups", "userId", 100, true, false, undefined, false);
   // fileId is encrypted for user privacy
-  await ensureStringAttribute("backups", "fileId", 100, true, false, undefined, true);
+  await ensureStringAttribute("backups", "fileId", 150, true, false, undefined, true);
   // backupType is not encrypted - needed for filtering
   await ensureStringAttribute("backups", "backupType", 30, true, false, undefined, false);
   // timestamp is not encrypted - needed for functionality
@@ -687,7 +687,7 @@ async function createMainCollections() {
   // size is encrypted for user privacy
   await ensureIntegerAttribute("backups", "size", true, false, undefined, undefined, undefined, true);
   // notes are encrypted for user privacy
-  await ensureStringAttribute("backups", "notes", 500, false, false, undefined, true);
+  await ensureStringAttribute("backups", "notes", 150, false, false, undefined, true);
 
   await ensureIndex("backups", "userId_idx", "key", ["userId"]);
   await ensureIndex("backups", "fileId_idx", "key", ["fileId"]);
