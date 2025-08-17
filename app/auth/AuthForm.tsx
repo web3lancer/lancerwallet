@@ -6,25 +6,28 @@ import Input from '@/app/components/ui/Input';
 import { login, signup } from './actions';
 
 export default function AuthForm() {
+  const [step, setStep] = useState(0); // 0: email, 1: password
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (action: 'login' | 'signup') => {
+  // Unified submit: try login, if user not found, fallback to signup
+  const handleUnifiedSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const result = action === 'login'
-        ? await login(email, password)
-        : await signup(email, password);
-
+      // Try login first
+      let result = await login(email, password);
+      if (result?.error) {
+        // If error is user not found, try signup
+        if (result.error.toLowerCase().includes('not found') || result.error.toLowerCase().includes('no user')) {
+          result = await signup(email, password);
+        }
+      }
       if (result?.error) {
         setError(result.error);
       } else {
-        // On success, Next.js router cache will be invalidated by the action,
-        // and the user will be redirected if the layout handles it.
-        // For now, we can just clear the form.
         setEmail('');
         setPassword('');
       }
@@ -39,6 +42,8 @@ export default function AuthForm() {
     }
   };
 
+  // Step 0: email only
+  // Step 1: password
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
       {error && (
@@ -46,43 +51,60 @@ export default function AuthForm() {
           {error}
         </div>
       )}
-      <Input
-        id="email"
-        name="email"
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        disabled={isSubmitting}
-      />
-      <Input
-        id="password"
-        name="password"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        disabled={isSubmitting}
-      />
-      <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-        <Button
-          onClick={() => handleSubmit('login')}
-          disabled={isSubmitting}
-          className="w-full"
-        >
-          {isSubmitting ? 'Signing In...' : 'Sign In'}
-        </Button>
-        <Button
-          onClick={() => handleSubmit('signup')}
-          disabled={isSubmitting}
-          variant="secondary"
-          className="w-full"
-        >
-          {isSubmitting ? 'Signing Up...' : 'Sign Up'}
-        </Button>
-      </div>
+      {step === 0 && (
+        <div className="space-y-4 animate-fade-in">
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={isSubmitting}
+            autoFocus
+          />
+          <Button
+            onClick={() => {
+              if (!email || !email.includes('@')) {
+                setError('Please enter a valid email address.');
+                return;
+              }
+              setError(null);
+              setStep(1);
+            }}
+            disabled={isSubmitting || !email}
+            className="w-full"
+            type="button"
+          >
+            Continue
+          </Button>
+        </div>
+      )}
+      {step === 1 && (
+        <div className="space-y-4 animate-fade-in">
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={isSubmitting}
+            autoFocus
+          />
+          <Button
+            onClick={handleUnifiedSubmit}
+            disabled={isSubmitting || !password}
+            className="w-full"
+            type="button"
+          >
+            {isSubmitting ? 'Processing...' : 'Continue'}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }
+
