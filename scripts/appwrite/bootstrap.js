@@ -1,4 +1,6 @@
 // Bootstrap complete Appwrite database, collections, storage, and config data
+// Load environment variables from .env
+require('dotenv').config();
 // Requires env: NEXT_PUBLIC_APPWRITE_ENDPOINT, NEXT_PUBLIC_APPWRITE_PROJECT_ID, APPWRITE_API_KEY, NEXT_PUBLIC_APPWRITE_DATABASE_ID
 
 // Use the Node.js server SDK for administrative operations
