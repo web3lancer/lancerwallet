@@ -245,13 +245,19 @@ async function createMainCollections() {
   ]);
   // userId is a plain string (not encrypted). Size 100 per schema.
   await ensureStringAttribute("users", "userId", 100, true, false, undefined, false);
-  await ensureEmailAttribute("users", "email", true, false, undefined);
-  await ensureStringAttribute("users", "displayName", 100, false);
-  await ensureUrlAttribute("users", "profileImage", false);
+  // email is encrypted for user privacy
+  await ensureEmailAttribute("users", "email", true, false, undefined, true);
+  // displayName is encrypted for user privacy
+  await ensureStringAttribute("users", "displayName", 100, false, false, undefined, true);
+  // profileImage URL is encrypted for user privacy
+  await ensureUrlAttribute("users", "profileImage", false, false, undefined, true);
+  // lastLogin is not encrypted - needed for functionality
   await ensureDatetimeAttribute("users", "lastLogin", false);
   // Appwrite does not allow setting a default on a required attribute.
   // Make accountStatus non-required so we can set a default value safely.
+  // accountStatus is not encrypted - needed for filtering/status checks
   await ensureEnumAttribute("users", "accountStatus", ["active", "suspended", "deleted"], false, false, "active", false);
+  // Timestamps are not encrypted - needed for system functionality
   await ensureDatetimeAttribute("users", "createdAt", true);
   await ensureDatetimeAttribute("users", "updatedAt", true);
   
@@ -267,17 +273,25 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // walletId is a system ID, not encrypted
   await ensureStringAttribute("wallets", "walletId", 100, true, false, undefined, false);
-  await ensureStringAttribute("wallets", "userId", 100, true);
-  await ensureStringAttribute("wallets", "address", 100, true);
-  await ensureStringAttribute("wallets", "name", 100, true);
-  await ensureStringAttribute("wallets", "network", 50, true);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("wallets", "userId", 100, true, false, undefined, false);
+  // address is public blockchain data, not encrypted
+  await ensureStringAttribute("wallets", "address", 100, true, false, undefined, false);
+  // name is encrypted for user privacy
+  await ensureStringAttribute("wallets", "name", 100, true, false, undefined, true);
+  // network is public blockchain data, not encrypted
+  await ensureStringAttribute("wallets", "network", 50, true, false, undefined, false);
   // Store encrypted wallet data using Appwrite's encrypted attribute (requires size >= 150)
   await ensureStringAttribute("wallets", "encryptedWalletData", 5000, true, false, undefined, true);
-  await ensureStringAttribute("wallets", "walletType", 50, true, false, "imported");
-  await ensureBooleanAttribute("wallets", "isActive", true, false, true);
-  await ensureDatetimeAttribute("wallets", "createdAt", true);
-  await ensureDatetimeAttribute("wallets", "updatedAt", true);
+  // walletType is not encrypted - needed for filtering
+  await ensureStringAttribute("wallets", "walletType", 50, true, false, "imported", false);
+  // isActive is not encrypted - needed for filtering
+  await ensureBooleanAttribute("wallets", "isActive", true, false, true, false);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("wallets", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("wallets", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("wallets", "userId_idx", "key", ["userId"]);
   await ensureIndex("wallets", "address_idx", "unique", ["address"]);
@@ -293,20 +307,32 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // transactionId is a system ID, not encrypted
   await ensureStringAttribute("transactions", "transactionId", 100, true, false, undefined, false);
-  await ensureStringAttribute("transactions", "userId", 100, true);
-  await ensureStringAttribute("transactions", "walletId", 100, true);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("transactions", "userId", 100, true, false, undefined, false);
+  // walletId is a system reference, not encrypted
+  await ensureStringAttribute("transactions", "walletId", 100, true, false, undefined, false);
+  // hash is public blockchain data, not encrypted
   await ensureStringAttribute("transactions", "hash", 100, true, false, undefined, false);
-  await ensureStringAttribute("transactions", "fromAddress", 100, true);
-  await ensureStringAttribute("transactions", "toAddress", 100, true);
-  await ensureStringAttribute("transactions", "value", 100, true);
-  await ensureStringAttribute("transactions", "network", 50, true);
-  await ensureStringAttribute("transactions", "status", 20, true);
-  await ensureStringAttribute("transactions", "type", 20, true);
-  await ensureDatetimeAttribute("transactions", "timestamp", true);
-  await ensureStringAttribute("transactions", "notes", 500, false);
-  await ensureDatetimeAttribute("transactions", "createdAt", true);
-  await ensureDatetimeAttribute("transactions", "updatedAt", true);
+  // addresses are public blockchain data, not encrypted
+  await ensureStringAttribute("transactions", "fromAddress", 100, true, false, undefined, false);
+  await ensureStringAttribute("transactions", "toAddress", 100, true, false, undefined, false);
+  // value is financial data, encrypted for privacy
+  await ensureStringAttribute("transactions", "value", 100, true, false, undefined, true);
+  // network is public blockchain data, not encrypted
+  await ensureStringAttribute("transactions", "network", 50, true, false, undefined, false);
+  // status is not encrypted - needed for filtering
+  await ensureStringAttribute("transactions", "status", 20, true, false, undefined, false);
+  // type is not encrypted - needed for filtering
+  await ensureStringAttribute("transactions", "type", 20, true, false, undefined, false);
+  // timestamp is not encrypted - needed for filtering/sorting
+  await ensureDatetimeAttribute("transactions", "timestamp", true, false, undefined, false);
+  // notes are encrypted for user privacy
+  await ensureStringAttribute("transactions", "notes", 500, false, false, undefined, true);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("transactions", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("transactions", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("transactions", "userId_idx", "key", ["userId"]);
   await ensureIndex("transactions", "walletId_idx", "key", ["walletId"]);
@@ -327,19 +353,31 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // tokenId is a system ID, not encrypted
   await ensureStringAttribute("tokens", "tokenId", 100, true, false, undefined, false);
-  await ensureStringAttribute("tokens", "userId", 100, true);
-  await ensureStringAttribute("tokens", "walletId", 100, true);
-  await ensureStringAttribute("tokens", "contractAddress", 100, true);
-  await ensureStringAttribute("tokens", "symbol", 20, true);
-  await ensureStringAttribute("tokens", "name", 100, true);
-  await ensureIntegerAttribute("tokens", "decimals", true);
-  await ensureStringAttribute("tokens", "balance", 100, true);
-  await ensureStringAttribute("tokens", "network", 50, true);
-  await ensureBooleanAttribute("tokens", "isNative", true, false, false);
-  await ensureBooleanAttribute("tokens", "isActive", true, false, true);
-  await ensureDatetimeAttribute("tokens", "createdAt", true);
-  await ensureDatetimeAttribute("tokens", "updatedAt", true);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("tokens", "userId", 100, true, false, undefined, false);
+  // walletId is a system reference, not encrypted
+  await ensureStringAttribute("tokens", "walletId", 100, true, false, undefined, false);
+  // contractAddress is public blockchain data, not encrypted
+  await ensureStringAttribute("tokens", "contractAddress", 100, true, false, undefined, false);
+  // symbol is public blockchain data, not encrypted
+  await ensureStringAttribute("tokens", "symbol", 20, true, false, undefined, false);
+  // name is public blockchain data, not encrypted
+  await ensureStringAttribute("tokens", "name", 100, true, false, undefined, false);
+  // decimals is public blockchain data, not encrypted
+  await ensureIntegerAttribute("tokens", "decimals", true, false, undefined, undefined, undefined, false);
+  // balance is financial data, encrypted for privacy
+  await ensureStringAttribute("tokens", "balance", 100, true, false, undefined, true);
+  // network is public blockchain data, not encrypted
+  await ensureStringAttribute("tokens", "network", 50, true, false, undefined, false);
+  // isNative is not encrypted - needed for filtering
+  await ensureBooleanAttribute("tokens", "isNative", true, false, false, false);
+  // isActive is not encrypted - needed for filtering
+  await ensureBooleanAttribute("tokens", "isActive", true, false, true, false);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("tokens", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("tokens", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("tokens", "userId_idx", "key", ["userId"]);
   await ensureIndex("tokens", "walletId_idx", "key", ["walletId"]);
@@ -357,21 +395,35 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // nftId is a system ID, not encrypted
   await ensureStringAttribute("nfts", "nftId", 100, true, false, undefined, false);
-  await ensureStringAttribute("nfts", "userId", 100, true);
-  await ensureStringAttribute("nfts", "walletId", 100, true);
-  await ensureStringAttribute("nfts", "contractAddress", 100, true);
-  await ensureStringAttribute("nfts", "tokenId", 100, true);
-  await ensureStringAttribute("nfts", "name", 200, true);
-  await ensureStringAttribute("nfts", "description", 2000, false);
-  await ensureStringAttribute("nfts", "imageStorageId", 100, false);
-  await ensureStringAttribute("nfts", "collection", 100, true);
-  await ensureStringAttribute("nfts", "standard", 20, true, false, "ERC721");
-  await ensureStringAttribute("nfts", "network", 50, true);
-  await ensureStringAttribute("nfts", "metadata", 5000, false);
-  await ensureBooleanAttribute("nfts", "isActive", true, false, true);
-  await ensureDatetimeAttribute("nfts", "createdAt", true);
-  await ensureDatetimeAttribute("nfts", "updatedAt", true);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("nfts", "userId", 100, true, false, undefined, false);
+  // walletId is a system reference, not encrypted
+  await ensureStringAttribute("nfts", "walletId", 100, true, false, undefined, false);
+  // contractAddress is public blockchain data, not encrypted
+  await ensureStringAttribute("nfts", "contractAddress", 100, true, false, undefined, false);
+  // tokenId is public blockchain data, not encrypted
+  await ensureStringAttribute("nfts", "tokenId", 100, true, false, undefined, false);
+  // name is public but can be filtered, not encrypted for functionality
+  await ensureStringAttribute("nfts", "name", 200, true, false, undefined, false);
+  // description is encrypted for user privacy
+  await ensureStringAttribute("nfts", "description", 2000, false, false, undefined, true);
+  // imageStorageId is encrypted for user privacy
+  await ensureStringAttribute("nfts", "imageStorageId", 100, false, false, undefined, true);
+  // collection is public but can be filtered, not encrypted for functionality
+  await ensureStringAttribute("nfts", "collection", 100, true, false, undefined, false);
+  // standard is public blockchain data, not encrypted
+  await ensureStringAttribute("nfts", "standard", 20, true, false, "ERC721", false);
+  // network is public blockchain data, not encrypted
+  await ensureStringAttribute("nfts", "network", 50, true, false, undefined, false);
+  // metadata is encrypted for user privacy
+  await ensureStringAttribute("nfts", "metadata", 5000, false, false, undefined, true);
+  // isActive is not encrypted - needed for filtering
+  await ensureBooleanAttribute("nfts", "isActive", true, false, true, false);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("nfts", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("nfts", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("nfts", "userId_idx", "key", ["userId"]);
   await ensureIndex("nfts", "walletId_idx", "key", ["walletId"]);
@@ -390,16 +442,25 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("webauthn_credentials", "credentialId", 200, true, false, undefined, true);
-  await ensureStringAttribute("webauthn_credentials", "userId", 100, true);
-  await ensureStringAttribute("webauthn_credentials", "publicKey", 1000, true);
-  await ensureIntegerAttribute("webauthn_credentials", "counter", true, false, undefined, undefined, 0);
-  await ensureStringAttribute("webauthn_credentials", "deviceName", 100, false);
-  await ensureEnumAttribute("webauthn_credentials", "deviceType", ["platform", "cross-platform"], false);
-  await ensureBooleanAttribute("webauthn_credentials", "isActive", true, false, true);
-  await ensureDatetimeAttribute("webauthn_credentials", "lastUsed", false);
-  await ensureDatetimeAttribute("webauthn_credentials", "createdAt", true);
-  await ensureDatetimeAttribute("webauthn_credentials", "updatedAt", true);
+  // credentialId is not encrypted - needed for authentication lookups
+  await ensureStringAttribute("webauthn_credentials", "credentialId", 200, true, false, undefined, false);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("webauthn_credentials", "userId", 100, true, false, undefined, false);
+  // publicKey is encrypted for user security
+  await ensureStringAttribute("webauthn_credentials", "publicKey", 1000, true, false, undefined, true);
+  // counter is not encrypted - needed for security validation
+  await ensureIntegerAttribute("webauthn_credentials", "counter", true, false, undefined, undefined, 0, false);
+  // deviceName is encrypted for user privacy
+  await ensureStringAttribute("webauthn_credentials", "deviceName", 100, false, false, undefined, true);
+  // deviceType is not encrypted - needed for filtering
+  await ensureEnumAttribute("webauthn_credentials", "deviceType", ["platform", "cross-platform"], false, false, undefined, false);
+  // isActive is not encrypted - needed for filtering
+  await ensureBooleanAttribute("webauthn_credentials", "isActive", true, false, true, false);
+  // lastUsed is not encrypted - needed for functionality
+  await ensureDatetimeAttribute("webauthn_credentials", "lastUsed", false, false, undefined, false);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("webauthn_credentials", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("webauthn_credentials", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("webauthn_credentials", "userId_idx", "key", ["userId"]);
   await ensureIndex("webauthn_credentials", "credentialId_idx", "unique", ["credentialId"]);
@@ -414,19 +475,31 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // positionId is a system ID, not encrypted
   await ensureStringAttribute("defi_positions", "positionId", 100, true, false, undefined, false);
-  await ensureStringAttribute("defi_positions", "userId", 100, true);
-  await ensureStringAttribute("defi_positions", "walletId", 100, true);
-  await ensureStringAttribute("defi_positions", "protocol", 50, true);
-  await ensureStringAttribute("defi_positions", "positionType", 30, true);
-  await ensureStringAttribute("defi_positions", "contractAddress", 100, true);
-  await ensureStringAttribute("defi_positions", "tokenA", 20, false);
-  await ensureStringAttribute("defi_positions", "tokenB", 20, false);
-  await ensureStringAttribute("defi_positions", "amount", 100, true);
-  await ensureStringAttribute("defi_positions", "network", 50, true);
-  await ensureBooleanAttribute("defi_positions", "isActive", true, false, true);
-  await ensureDatetimeAttribute("defi_positions", "createdAt", true);
-  await ensureDatetimeAttribute("defi_positions", "updatedAt", true);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("defi_positions", "userId", 100, true, false, undefined, false);
+  // walletId is a system reference, not encrypted
+  await ensureStringAttribute("defi_positions", "walletId", 100, true, false, undefined, false);
+  // protocol is not encrypted - needed for filtering
+  await ensureStringAttribute("defi_positions", "protocol", 50, true, false, undefined, false);
+  // positionType is not encrypted - needed for filtering
+  await ensureStringAttribute("defi_positions", "positionType", 30, true, false, undefined, false);
+  // contractAddress is public blockchain data, not encrypted
+  await ensureStringAttribute("defi_positions", "contractAddress", 100, true, false, undefined, false);
+  // tokenA is public blockchain data, not encrypted
+  await ensureStringAttribute("defi_positions", "tokenA", 20, false, false, undefined, false);
+  // tokenB is public blockchain data, not encrypted
+  await ensureStringAttribute("defi_positions", "tokenB", 20, false, false, undefined, false);
+  // amount is financial data, encrypted for privacy
+  await ensureStringAttribute("defi_positions", "amount", 100, true, false, undefined, true);
+  // network is public blockchain data, not encrypted
+  await ensureStringAttribute("defi_positions", "network", 50, true, false, undefined, false);
+  // isActive is not encrypted - needed for filtering
+  await ensureBooleanAttribute("defi_positions", "isActive", true, false, true, false);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("defi_positions", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("defi_positions", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("defi_positions", "userId_idx", "key", ["userId"]);
   await ensureIndex("defi_positions", "walletId_idx", "key", ["walletId"]);
@@ -465,17 +538,27 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // settingId is a system ID, not encrypted
   await ensureStringAttribute("user_settings", "settingId", 100, true, false, undefined, false);
+  // userId is a system reference, not encrypted
   await ensureStringAttribute("user_settings", "userId", 100, true, false, undefined, false);
-  await ensureStringAttribute("user_settings", "theme", 20, true, false, "auto");
-  await ensureStringAttribute("user_settings", "currency", 10, true, false, "USD");
-  await ensureStringAttribute("user_settings", "language", 10, true, false, "en");
-  await ensureStringAttribute("user_settings", "defaultNetwork", 50, true, false, "ethereum");
-  await ensureStringAttribute("user_settings", "notifications", 5000, true);
-  await ensureStringAttribute("user_settings", "security", 5000, true);
-  await ensureStringAttribute("user_settings", "advanced", 5000, false);
-  await ensureDatetimeAttribute("user_settings", "createdAt", true);
-  await ensureDatetimeAttribute("user_settings", "updatedAt", true);
+  // theme is encrypted for user privacy
+  await ensureStringAttribute("user_settings", "theme", 20, true, false, "auto", true);
+  // currency is encrypted for user privacy
+  await ensureStringAttribute("user_settings", "currency", 10, true, false, "USD", true);
+  // language is encrypted for user privacy
+  await ensureStringAttribute("user_settings", "language", 10, true, false, "en", true);
+  // defaultNetwork is encrypted for user privacy
+  await ensureStringAttribute("user_settings", "defaultNetwork", 50, true, false, "ethereum", true);
+  // notifications are encrypted for user privacy
+  await ensureStringAttribute("user_settings", "notifications", 5000, true, false, undefined, true);
+  // security settings are encrypted for user privacy
+  await ensureStringAttribute("user_settings", "security", 5000, true, false, undefined, true);
+  // advanced settings are encrypted for user privacy
+  await ensureStringAttribute("user_settings", "advanced", 5000, false, false, undefined, true);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("user_settings", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("user_settings", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("user_settings", "userId_idx", "unique", ["userId"]);
   await ensureIndex("user_settings", "settingId_idx", "unique", ["settingId"]);
@@ -487,20 +570,33 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // alertId is a system ID, not encrypted
   await ensureStringAttribute("price_alerts", "alertId", 100, true, false, undefined, false);
-  await ensureStringAttribute("price_alerts", "userId", 100, true);
-  await ensureStringAttribute("price_alerts", "symbol", 20, true);
-  await ensureStringAttribute("price_alerts", "contractAddress", 100, false);
-  await ensureStringAttribute("price_alerts", "network", 50, true);
-  await ensureStringAttribute("price_alerts", "alertType", 30, true);
-  await ensureFloatAttribute("price_alerts", "targetPrice", false);
-  await ensureFloatAttribute("price_alerts", "changePercent", false);
-  await ensureFloatAttribute("price_alerts", "currentPrice", false);
-  await ensureBooleanAttribute("price_alerts", "isActive", true, false, true);
-  await ensureBooleanAttribute("price_alerts", "triggered", true, false, false);
-  await ensureDatetimeAttribute("price_alerts", "triggeredAt", false);
-  await ensureDatetimeAttribute("price_alerts", "createdAt", true);
-  await ensureDatetimeAttribute("price_alerts", "updatedAt", true);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("price_alerts", "userId", 100, true, false, undefined, false);
+  // symbol is not encrypted - needed for filtering
+  await ensureStringAttribute("price_alerts", "symbol", 20, true, false, undefined, false);
+  // contractAddress is public blockchain data, not encrypted
+  await ensureStringAttribute("price_alerts", "contractAddress", 100, false, false, undefined, false);
+  // network is public blockchain data, not encrypted
+  await ensureStringAttribute("price_alerts", "network", 50, true, false, undefined, false);
+  // alertType is not encrypted - needed for filtering
+  await ensureStringAttribute("price_alerts", "alertType", 30, true, false, undefined, false);
+  // targetPrice is financial data, encrypted for privacy
+  await ensureFloatAttribute("price_alerts", "targetPrice", false, false, undefined, undefined, undefined, true);
+  // changePercent is financial data, encrypted for privacy
+  await ensureFloatAttribute("price_alerts", "changePercent", false, false, undefined, undefined, undefined, true);
+  // currentPrice is public market data, not encrypted
+  await ensureFloatAttribute("price_alerts", "currentPrice", false, false, undefined, undefined, undefined, false);
+  // isActive is not encrypted - needed for filtering
+  await ensureBooleanAttribute("price_alerts", "isActive", true, false, true, false);
+  // triggered is not encrypted - needed for filtering
+  await ensureBooleanAttribute("price_alerts", "triggered", true, false, false, false);
+  // triggeredAt is not encrypted - needed for functionality
+  await ensureDatetimeAttribute("price_alerts", "triggeredAt", false, false, undefined, false);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("price_alerts", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("price_alerts", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("price_alerts", "userId_idx", "key", ["userId"]);
   await ensureIndex("price_alerts", "symbol_idx", "key", ["symbol"]);
@@ -515,19 +611,31 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // hardwareWalletId is a system ID, not encrypted
   await ensureStringAttribute("hardware_wallets", "hardwareWalletId", 100, true, false, undefined, false);
-  await ensureStringAttribute("hardware_wallets", "userId", 100, true);
-  await ensureStringAttribute("hardware_wallets", "deviceType", 50, true);
-  await ensureStringAttribute("hardware_wallets", "deviceModel", 50, false);
-  await ensureStringAttribute("hardware_wallets", "deviceId", 100, true);
-  await ensureStringAttribute("hardware_wallets", "publicKey", 1000, true);
-  await ensureStringAttribute("hardware_wallets", "derivationPath", 100, true);
-  await ensureStringAttribute("hardware_wallets", "addresses", 5000, true);
-  await ensureStringAttribute("hardware_wallets", "name", 100, true);
-  await ensureBooleanAttribute("hardware_wallets", "isActive", true, false, true);
-  await ensureDatetimeAttribute("hardware_wallets", "lastConnected", false);
-  await ensureDatetimeAttribute("hardware_wallets", "createdAt", true);
-  await ensureDatetimeAttribute("hardware_wallets", "updatedAt", true);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("hardware_wallets", "userId", 100, true, false, undefined, false);
+  // deviceType is not encrypted - needed for filtering
+  await ensureStringAttribute("hardware_wallets", "deviceType", 50, true, false, undefined, false);
+  // deviceModel is public hardware info, not encrypted
+  await ensureStringAttribute("hardware_wallets", "deviceModel", 50, false, false, undefined, false);
+  // deviceId is encrypted for user security
+  await ensureStringAttribute("hardware_wallets", "deviceId", 100, true, false, undefined, true);
+  // publicKey is encrypted for user security
+  await ensureStringAttribute("hardware_wallets", "publicKey", 1000, true, false, undefined, true);
+  // derivationPath is encrypted for user security
+  await ensureStringAttribute("hardware_wallets", "derivationPath", 100, true, false, undefined, true);
+  // addresses are encrypted for user privacy
+  await ensureStringAttribute("hardware_wallets", "addresses", 5000, true, false, undefined, true);
+  // name is encrypted for user privacy
+  await ensureStringAttribute("hardware_wallets", "name", 100, true, false, undefined, true);
+  // isActive is not encrypted - needed for filtering
+  await ensureBooleanAttribute("hardware_wallets", "isActive", true, false, true, false);
+  // lastConnected is not encrypted - needed for functionality
+  await ensureDatetimeAttribute("hardware_wallets", "lastConnected", false, false, undefined, false);
+  // Timestamps are not encrypted - needed for system functionality
+  await ensureDatetimeAttribute("hardware_wallets", "createdAt", true, false, undefined, false);
+  await ensureDatetimeAttribute("hardware_wallets", "updatedAt", true, false, undefined, false);
 
   await ensureIndex("hardware_wallets", "userId_idx", "key", ["userId"]);
   await ensureIndex("hardware_wallets", "deviceId_idx", "key", ["deviceId"]);
@@ -566,13 +674,20 @@ async function createMainCollections() {
     Permission.create(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
+  // backupId is a system ID, not encrypted
   await ensureStringAttribute("backups", "backupId", 100, true, false, undefined, false);
-  await ensureStringAttribute("backups", "userId", 100, true);
-  await ensureStringAttribute("backups", "fileId", 100, true);
-  await ensureStringAttribute("backups", "backupType", 30, true);
-  await ensureDatetimeAttribute("backups", "timestamp", true);
-  await ensureIntegerAttribute("backups", "size", true);
-  await ensureStringAttribute("backups", "notes", 500, false);
+  // userId is a system reference, not encrypted
+  await ensureStringAttribute("backups", "userId", 100, true, false, undefined, false);
+  // fileId is encrypted for user privacy
+  await ensureStringAttribute("backups", "fileId", 100, true, false, undefined, true);
+  // backupType is not encrypted - needed for filtering
+  await ensureStringAttribute("backups", "backupType", 30, true, false, undefined, false);
+  // timestamp is not encrypted - needed for functionality
+  await ensureDatetimeAttribute("backups", "timestamp", true, false, undefined, false);
+  // size is encrypted for user privacy
+  await ensureIntegerAttribute("backups", "size", true, false, undefined, undefined, undefined, true);
+  // notes are encrypted for user privacy
+  await ensureStringAttribute("backups", "notes", 500, false, false, undefined, true);
 
   await ensureIndex("backups", "userId_idx", "key", ["userId"]);
   await ensureIndex("backups", "fileId_idx", "key", ["fileId"]);
