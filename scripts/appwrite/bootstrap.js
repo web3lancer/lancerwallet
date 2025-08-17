@@ -164,7 +164,9 @@ async function createMainCollections() {
   await ensureStringAttribute("users", "displayName", 100, false);
   await ensureUrlAttribute("users", "profileImage", false);
   await ensureDatetimeAttribute("users", "lastLogin", false);
-  await ensureEnumAttribute("users", "accountStatus", ["active", "suspended", "deleted"], true, false, "active");
+  // Appwrite does not allow setting a default on a required attribute.
+  // Make accountStatus non-required so we can set a default value safely.
+  await ensureEnumAttribute("users", "accountStatus", ["active", "suspended", "deleted"], false, false, "active");
   await ensureDatetimeAttribute("users", "createdAt", true);
   await ensureDatetimeAttribute("users", "updatedAt", true);
   
