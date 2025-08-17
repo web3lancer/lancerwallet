@@ -44,3 +44,7 @@ next-env.d.ts
 
 contracts_lancerwallet_core/
 contracts_lancerwallet_mantle/
+
+.docx/
+docx/
+.docs/
