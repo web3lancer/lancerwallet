@@ -38,5 +38,2313 @@
                 "mockNumbers": []
             }
         }
-    }
+    },
+    "databases": [
+        {
+            "$id": "lancerwallet_db",
+            "name": "LancerWallet Database",
+            "enabled": true
+        }
+    ],
+    "collections": [
+        {
+            "$id": "users",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"team:admin\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Users",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "format": "email",
+                    "default": null
+                },
+                {
+                    "key": "displayName",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "profileImage",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "format": "url",
+                    "default": null
+                },
+                {
+                    "key": "lastLogin",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "accountStatus",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "elements": [
+                        "active",
+                        "suspended",
+                        "deleted"
+                    ],
+                    "format": "enum",
+                    "default": "active"
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "email_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "email"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "accountStatus_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "accountStatus"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "createdAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "createdAt"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "wallets",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Wallets",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "walletId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "address",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "network",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "encryptedWalletData",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "walletType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "isActive",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "address_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "address"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "network_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "network"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "isActive_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "isActive"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "walletId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "walletId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "createdAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "createdAt"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "transactions",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Transactions",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "transactionId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "walletId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "hash",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "fromAddress",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "toAddress",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "value",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "network",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "type",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "timestamp",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "notes",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "walletId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "walletId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "hash_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "hash"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "fromAddress_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "fromAddress"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "toAddress_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "toAddress"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "status_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "status"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "type_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "type"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "network_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "network"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "timestamp_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "timestamp"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "transactionId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "transactionId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "createdAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "createdAt"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "tokens",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Tokens",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "tokenId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "walletId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "contractAddress",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "symbol",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "decimals",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "balance",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "network",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "isNative",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "isActive",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "walletId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "walletId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "contractAddress_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "contractAddress"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "symbol_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "symbol"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "network_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "network"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "isActive_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "isActive"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "tokenId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "tokenId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "createdAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "createdAt"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "nfts",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "NFTs",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "nftId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "walletId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "contractAddress",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "tokenId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "description",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 2000,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "imageStorageId",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "collection",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "standard",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "network",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "metadata",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "isActive",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "walletId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "walletId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "contractAddress_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "contractAddress"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "tokenId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "tokenId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "collection_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "collection"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "network_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "network"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "isActive_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "isActive"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "nftId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "nftId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "createdAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "createdAt"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "webauthn_credentials",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "WebAuthn Credentials",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "credentialId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "publicKey",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 1500,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "counter",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "deviceName",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "deviceType",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "elements": [
+                        "platform",
+                        "cross-platform"
+                    ],
+                    "format": "enum",
+                    "default": null
+                },
+                {
+                    "key": "isActive",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "lastUsed",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "credentialId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "credentialId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "isActive_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "isActive"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "lastUsed_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "lastUsed"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "createdAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "createdAt"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "defi_positions",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "DeFi Positions",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "positionId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "walletId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "protocol",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "positionType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 30,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "contractAddress",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "tokenA",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "tokenB",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "amount",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "network",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "isActive",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "walletId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "walletId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "protocol_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "protocol"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "positionType_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "positionType"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "network_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "network"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "isActive_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "isActive"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "positionId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "positionId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "createdAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "createdAt"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "app_settings",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"team:admin\")",
+                "update(\"team:admin\")",
+                "delete(\"team:admin\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "App Settings",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "settingId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "key",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "value",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "category",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "description",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "isPublic",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "key_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "key"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "category_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "category"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "isPublic_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "isPublic"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "settingId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "settingId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "user_settings",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "User Settings",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "settingId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "theme",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "currency",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "language",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "defaultNetwork",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "notifications",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "security",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "advanced",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "settingId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "settingId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "price_alerts",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Price Alerts",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "alertId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "symbol",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "contractAddress",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "network",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "alertType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "targetPrice",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308,
+                    "default": null
+                },
+                {
+                    "key": "changePercent",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308,
+                    "default": null
+                },
+                {
+                    "key": "currentPrice",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308,
+                    "default": null
+                },
+                {
+                    "key": "isActive",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "triggered",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "triggeredAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "symbol_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "symbol"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "isActive_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "isActive"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "triggered_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "triggered"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "alertId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "alertId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "hardware_wallets",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Hardware Wallets",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "hardwareWalletId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "deviceType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "deviceModel",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "deviceId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "publicKey",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 1500,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "derivationPath",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "addresses",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "isActive",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "lastConnected",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "deviceId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "deviceId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "deviceType_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "deviceType"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "isActive_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "isActive"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "hardwareWalletId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "hardwareWalletId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "plugin_configurations",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "update(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Plugin Configurations",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "configId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "pluginId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "pluginName",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "version",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "enabled",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "configuration",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "permissions",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "lastUsed",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "updatedAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "pluginId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "pluginId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "enabled_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "enabled"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "lastUsed_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "lastUsed"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "configId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "configId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "backups",
+            "$permissions": [
+                "read(\"user:USER_ID\")",
+                "create(\"user:USER_ID\")",
+                "delete(\"user:USER_ID\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Backups",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "backupId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "fileId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                },
+                {
+                    "key": "backupType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "timestamp",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "size",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "notes",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": true
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "fileId_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "fileId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "backupType_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "backupType"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "timestamp_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "timestamp"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "backupId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "backupId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "nonces",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"team:admin\")"
+            ],
+            "databaseId": "lancerwallet_db",
+            "name": "Nonces",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "nonceId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "key",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "nonce",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 150,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "expiresAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "used",
+                    "type": "boolean",
+                    "required": true,
+                    "array": false,
+                    "default": null
+                },
+                {
+                    "key": "createdAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "key_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "key"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "expiresAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "expiresAt"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "used_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "used"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "createdAt_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "createdAt"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "nonceId_idx",
+                    "type": "unique",
+                    "status": "available",
+                    "attributes": [
+                        "nonceId"
+                    ],
+                    "orders": []
+                }
+            ]
+        }
+    ]
 }
