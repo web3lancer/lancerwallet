@@ -556,7 +556,7 @@ async function createMainCollections() {
   // userId is a system reference, not encrypted
   await ensureStringAttribute("user_settings", "userId", 100, true, false, undefined, false);
   // theme is encrypted for user privacy
-  await ensureStringAttribute("user_settings", "theme", 20, true, false, undefined, true);
+  await ensureStringAttribute("user_settings", "theme", 150, true, false, undefined, true);
   // currency is encrypted for user privacy
   await ensureStringAttribute("user_settings", "currency", 10, true, false, undefined, true);
   // language is encrypted for user privacy
