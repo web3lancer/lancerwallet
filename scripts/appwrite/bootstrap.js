@@ -558,11 +558,11 @@ async function createMainCollections() {
   // theme is encrypted for user privacy
   await ensureStringAttribute("user_settings", "theme", 150, true, false, undefined, true);
   // currency is encrypted for user privacy
-  await ensureStringAttribute("user_settings", "currency", 10, true, false, undefined, true);
+  await ensureStringAttribute("user_settings", "currency", 150, true, false, undefined, true);
   // language is encrypted for user privacy
-  await ensureStringAttribute("user_settings", "language", 10, true, false, undefined, true);
+  await ensureStringAttribute("user_settings", "language", 150, true, false, undefined, true);
   // defaultNetwork is encrypted for user privacy
-  await ensureStringAttribute("user_settings", "defaultNetwork", 50, true, false, undefined, true);
+  await ensureStringAttribute("user_settings", "defaultNetwork", 150, true, false, undefined, true);
   // notifications are encrypted for user privacy
   await ensureStringAttribute("user_settings", "notifications", 5000, true, false, undefined, true);
   // security settings are encrypted for user privacy
@@ -584,17 +584,17 @@ async function createMainCollections() {
     Permission.delete(Role.user("USER_ID"))
   ]);
   // alertId is a system ID, not encrypted
-  await ensureStringAttribute("price_alerts", "alertId", 100, true, false, undefined, false);
+  await ensureStringAttribute("price_alerts", "alertId", 150, true, false, undefined, false);
   // userId is a system reference, not encrypted
-  await ensureStringAttribute("price_alerts", "userId", 100, true, false, undefined, false);
+  await ensureStringAttribute("price_alerts", "userId", 150, true, false, undefined, false);
   // symbol is not encrypted - needed for filtering
-  await ensureStringAttribute("price_alerts", "symbol", 20, true, false, undefined, false);
+  await ensureStringAttribute("price_alerts", "symbol", 150, true, false, undefined, false);
   // contractAddress is public blockchain data, not encrypted
-  await ensureStringAttribute("price_alerts", "contractAddress", 100, false, false, undefined, false);
+  await ensureStringAttribute("price_alerts", "contractAddress", 150, false, false, undefined, false);
   // network is public blockchain data, not encrypted
-  await ensureStringAttribute("price_alerts", "network", 50, true, false, undefined, false);
+  await ensureStringAttribute("price_alerts", "network", 150, true, false, undefined, false);
   // alertType is not encrypted - needed for filtering
-  await ensureStringAttribute("price_alerts", "alertType", 30, true, false, undefined, false);
+  await ensureStringAttribute("price_alerts", "alertType", 150, true, false, undefined, false);
   // targetPrice is financial data, encrypted for privacy
   await ensureFloatAttribute("price_alerts", "targetPrice", false, false, undefined, undefined, undefined, true);
   // changePercent is financial data, encrypted for privacy
@@ -625,13 +625,13 @@ async function createMainCollections() {
     Permission.delete(Role.user("USER_ID"))
   ]);
   // hardwareWalletId is a system ID, not encrypted
-  await ensureStringAttribute("hardware_wallets", "hardwareWalletId", 100, true, false, undefined, false);
+  await ensureStringAttribute("hardware_wallets", "hardwareWalletId", 150, true, false, undefined, false);
   // userId is a system reference, not encrypted
-  await ensureStringAttribute("hardware_wallets", "userId", 100, true, false, undefined, false);
+  await ensureStringAttribute("hardware_wallets", "userId", 150, true, false, undefined, false);
   // deviceType is not encrypted - needed for filtering
-  await ensureStringAttribute("hardware_wallets", "deviceType", 50, true, false, undefined, false);
+  await ensureStringAttribute("hardware_wallets", "deviceType", 150, true, false, undefined, false);
   // deviceModel is public hardware info, not encrypted
-  await ensureStringAttribute("hardware_wallets", "deviceModel", 50, false, false, undefined, false);
+  await ensureStringAttribute("hardware_wallets", "deviceModel", 150, false, false, undefined, false);
   // deviceId is encrypted for user security
   await ensureStringAttribute("hardware_wallets", "deviceId", 150, true, false, undefined, true);
   // publicKey is encrypted for user security
@@ -663,11 +663,11 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.user("USER_ID"))
   ]);
-  await ensureStringAttribute("plugin_configurations", "configId", 100, true, false, undefined, false);
-  await ensureStringAttribute("plugin_configurations", "userId", 100, true);
-  await ensureStringAttribute("plugin_configurations", "pluginId", 100, true);
-  await ensureStringAttribute("plugin_configurations", "pluginName", 100, true);
-  await ensureStringAttribute("plugin_configurations", "version", 20, true);
+  await ensureStringAttribute("plugin_configurations", "configId", 150, true, false, undefined, false);
+  await ensureStringAttribute("plugin_configurations", "userId", 150, true);
+  await ensureStringAttribute("plugin_configurations", "pluginId", 150, true);
+  await ensureStringAttribute("plugin_configurations", "pluginName", 150, true);
+  await ensureStringAttribute("plugin_configurations", "version", 150, true);
   await ensureBooleanAttribute("plugin_configurations", "enabled", true, false, undefined);
   await ensureStringAttribute("plugin_configurations", "configuration", 20000, true);
   await ensureStringAttribute("plugin_configurations", "permissions", 5000, false);
@@ -688,13 +688,13 @@ async function createMainCollections() {
     Permission.delete(Role.user("USER_ID"))
   ]);
   // backupId is a system ID, not encrypted
-  await ensureStringAttribute("backups", "backupId", 100, true, false, undefined, false);
+  await ensureStringAttribute("backups", "backupId", 150, true, false, undefined, false);
   // userId is a system reference, not encrypted
-  await ensureStringAttribute("backups", "userId", 100, true, false, undefined, false);
+  await ensureStringAttribute("backups", "userId", 150, true, false, undefined, false);
   // fileId is encrypted for user privacy
   await ensureStringAttribute("backups", "fileId", 150, true, false, undefined, true);
   // backupType is not encrypted - needed for filtering
-  await ensureStringAttribute("backups", "backupType", 30, true, false, undefined, false);
+  await ensureStringAttribute("backups", "backupType", 150, true, false, undefined, false);
   // timestamp is not encrypted - needed for functionality
   await ensureDatetimeAttribute("backups", "timestamp", true, false, undefined, false);
   // size is encrypted for user privacy
@@ -715,9 +715,9 @@ async function createMainCollections() {
     Permission.update(Role.any()),
     Permission.delete(Role.team("admin"))
   ]);
-  await ensureStringAttribute("nonces", "nonceId", 100, true, false, undefined, false);
-  await ensureStringAttribute("nonces", "key", 100, true, false, undefined, false);
-  await ensureStringAttribute("nonces", "nonce", 100, true);
+  await ensureStringAttribute("nonces", "nonceId", 150, true, false, undefined, false);
+  await ensureStringAttribute("nonces", "key", 150, true, false, undefined, false);
+  await ensureStringAttribute("nonces", "nonce", 150, true);
   await ensureDatetimeAttribute("nonces", "expiresAt", true);
   await ensureBooleanAttribute("nonces", "used", true, false, undefined);
   await ensureDatetimeAttribute("nonces", "createdAt", true);
@@ -860,13 +860,13 @@ async function createConfigCollections() {
     Permission.update(Role.team("admin")),
     Permission.delete(Role.team("admin"))
   ]);
-  await ensureStringAttribute("networks", "key", 50, true, false, undefined, true);
-  await ensureStringAttribute("networks", "name", 100, true);
+  await ensureStringAttribute("networks", "key", 150, true, false, undefined, true);
+  await ensureStringAttribute("networks", "name", 150, true);
   await ensureIntegerAttribute("networks", "chainId", false);
-  await ensureStringAttribute("networks", "type", 30, true);
+  await ensureStringAttribute("networks", "type", 150, true);
   await ensureStringAttribute("networks", "rpcUrl", 500, false);
   await ensureStringAttribute("networks", "explorerUrl", 500, false);
-  await ensureStringAttribute("networks", "nativeSymbol", 20, false);
+  await ensureStringAttribute("networks", "nativeSymbol", 150, false);
   await ensureBooleanAttribute("networks", "enabled", true, false, undefined);
   await ensureIntegerAttribute("networks", "order", false);
   await ensureStringAttribute("networks", "metadata", 5000, false);
@@ -880,8 +880,8 @@ async function createConfigCollections() {
 
   // Languages
   await ensureCollection("languages", "Languages");
-  await ensureStringAttribute("languages", "code", 10, true, false, undefined, true);
-  await ensureStringAttribute("languages", "name", 100, true);
+  await ensureStringAttribute("languages", "code", 150, true, false, undefined, true);
+  await ensureStringAttribute("languages", "name", 150, true);
   await ensureBooleanAttribute("languages", "enabled", true, false, undefined);
   await ensureIntegerAttribute("languages", "order", false);
 
@@ -892,9 +892,9 @@ async function createConfigCollections() {
 
   // Currencies
   await ensureCollection("currencies", "Currencies");
-  await ensureStringAttribute("currencies", "code", 10, true, false, undefined, true);
-  await ensureStringAttribute("currencies", "symbol", 10, true);
-  await ensureStringAttribute("currencies", "name", 100, true);
+  await ensureStringAttribute("currencies", "code", 150, true, false, undefined, true);
+  await ensureStringAttribute("currencies", "symbol", 150, true);
+  await ensureStringAttribute("currencies", "name", 150, true);
   await ensureIntegerAttribute("currencies", "decimals", true, false, 0, 18, undefined);
   await ensureBooleanAttribute("currencies", "enabled", true, false, undefined);
   await ensureIntegerAttribute("currencies", "order", false);
@@ -921,8 +921,8 @@ async function createConfigCollections() {
 
   // Alert types
   await ensureCollection("alert_types", "Alert Types");
-  await ensureStringAttribute("alert_types", "key", 30, true, false, undefined, true);
-  await ensureStringAttribute("alert_types", "name", 100, true);
+  await ensureStringAttribute("alert_types", "key", 150, true, false, undefined, true);
+  await ensureStringAttribute("alert_types", "name", 150, true);
   await ensureBooleanAttribute("alert_types", "enabled", true, false, undefined);
   await ensureIntegerAttribute("alert_types", "order", false);
 
