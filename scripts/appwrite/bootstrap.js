@@ -68,6 +68,7 @@ async function ensureDatabase() {
   } catch (e) {
     console.log(`Creating database: ${databaseId}`);
     await db.create(databaseId, "LancerWallet Database");
+    await sleep(2000);
   }
 }
 
@@ -77,7 +78,8 @@ async function ensureCollection(collectionId, name, permissions = undefined, doc
     console.log(`Collection exists: ${collectionId}`);
   } catch (e) {
     console.log(`Creating collection: ${collectionId}`);
-  await db.createCollection(databaseId, collectionId, name, permissions, documentSecurity);
+    await db.createCollection(databaseId, collectionId, name, permissions, documentSecurity);
+    await sleep(2000);
   }
 }
 
@@ -90,6 +92,7 @@ async function ensureStringAttribute(collectionId, key, size, required = true, a
   } catch (e) {
     console.log(`Adding string attribute: ${collectionId}.${key}`);
     await db.createStringAttribute(databaseId, collectionId, key, size, required, defaultValue, array, encrypt);
+    await sleep(2000);
     await waitForAttributeAvailable(collectionId, key);
   }
 }
@@ -103,6 +106,7 @@ async function ensureIntegerAttribute(collectionId, key, required = true, array 
   } catch (e) {
     console.log(`Adding integer attribute: ${collectionId}.${key}`);
     await db.createIntegerAttribute(databaseId, collectionId, key, required, min, max, defaultValue, array, encrypt);
+    await sleep(2000);
     await waitForAttributeAvailable(collectionId, key);
   }
 }
@@ -116,6 +120,7 @@ async function ensureBooleanAttribute(collectionId, key, required = true, array 
   } catch (e) {
     console.log(`Adding boolean attribute: ${collectionId}.${key}`);
     await db.createBooleanAttribute(databaseId, collectionId, key, required, defaultValue, array, encrypt);
+    await sleep(2000);
     await waitForAttributeAvailable(collectionId, key);
   }
 }
@@ -129,6 +134,7 @@ async function ensureEmailAttribute(collectionId, key, required = true, array = 
   } catch (e) {
     console.log(`Adding email attribute: ${collectionId}.${key}`);
     await db.createEmailAttribute(databaseId, collectionId, key, required, defaultValue, array, encrypt);
+    await sleep(2000);
     await waitForAttributeAvailable(collectionId, key);
   }
 }
@@ -142,6 +148,7 @@ async function ensureUrlAttribute(collectionId, key, required = true, array = fa
   } catch (e) {
     console.log(`Adding URL attribute: ${collectionId}.${key}`);
     await db.createUrlAttribute(databaseId, collectionId, key, required, defaultValue, array, encrypt);
+    await sleep(2000);
     await waitForAttributeAvailable(collectionId, key);
   }
 }
@@ -155,6 +162,7 @@ async function ensureDatetimeAttribute(collectionId, key, required = true, array
   } catch (e) {
     console.log(`Adding datetime attribute: ${collectionId}.${key}`);
     await db.createDatetimeAttribute(databaseId, collectionId, key, required, defaultValue, array, encrypt);
+    await sleep(2000);
     await waitForAttributeAvailable(collectionId, key);
   }
 }
@@ -168,6 +176,7 @@ async function ensureFloatAttribute(collectionId, key, required = true, array = 
   } catch (e) {
     console.log(`Adding float attribute: ${collectionId}.${key}`);
     await db.createFloatAttribute(databaseId, collectionId, key, required, min, max, defaultValue, array, encrypt);
+    await sleep(2000);
     await waitForAttributeAvailable(collectionId, key);
   }
 }
@@ -181,6 +190,7 @@ async function ensureEnumAttribute(collectionId, key, elements, required = true,
   } catch (e) {
     console.log(`Adding enum attribute: ${collectionId}.${key}`);
     await db.createEnumAttribute(databaseId, collectionId, key, elements, required, defaultValue, array, encrypt);
+    await sleep(2000);
     await waitForAttributeAvailable(collectionId, key);
   }
 }
@@ -191,7 +201,8 @@ async function ensureIndex(collectionId, key, type, attributes, orders = undefin
   } catch (e) {
     console.log(`Creating index: ${collectionId}.${key}`);
     await db.createIndex(databaseId, collectionId, key, type, attributes, orders);
-  await waitForIndexAvailable(collectionId, key);
+    await sleep(2000);
+    await waitForIndexAvailable(collectionId, key);
   }
 }
 
@@ -202,6 +213,7 @@ async function ensureStorageBucket(bucketId, name, permissions, fileSecurity = t
   } catch (e) {
     console.log(`Creating storage bucket: ${bucketId}`);
     await storage.createBucket(bucketId, name, permissions, fileSecurity, enabled, maximumFileSize, allowedFileExtensions, compression, encryption, antivirus);
+    await sleep(2000);
   }
 }
 
@@ -214,6 +226,7 @@ async function seedDocuments(collectionId, docs, idKey = "key") {
     } catch (e) {
       console.log(`Creating document: ${collectionId}/${docId}`);
       await db.createDocument(databaseId, collectionId, docId, doc);
+      await sleep(2000);
     }
   }
 }
@@ -286,9 +299,9 @@ async function createMainCollections() {
   // Store encrypted wallet data using Appwrite's encrypted attribute (requires size >= 150)
   await ensureStringAttribute("wallets", "encryptedWalletData", 5000, true, false, undefined, true);
   // walletType is not encrypted - needed for filtering
-  await ensureStringAttribute("wallets", "walletType", 50, true, false, "imported", false);
+  await ensureStringAttribute("wallets", "walletType", 50, true, false, undefined, false);
   // isActive is not encrypted - needed for filtering
-  await ensureBooleanAttribute("wallets", "isActive", true, false, true, false);
+  await ensureBooleanAttribute("wallets", "isActive", true, false, undefined, false);
   // Timestamps are not encrypted - needed for system functionality
   await ensureDatetimeAttribute("wallets", "createdAt", true, false, undefined, false);
   await ensureDatetimeAttribute("wallets", "updatedAt", true, false, undefined, false);
@@ -414,13 +427,13 @@ async function createMainCollections() {
   // collection is public but can be filtered, not encrypted for functionality
   await ensureStringAttribute("nfts", "collection", 100, true, false, undefined, false);
   // standard is public blockchain data, not encrypted
-  await ensureStringAttribute("nfts", "standard", 20, true, false, "ERC721", false);
+  await ensureStringAttribute("nfts", "standard", 20, true, false, undefined, false);
   // network is public blockchain data, not encrypted
   await ensureStringAttribute("nfts", "network", 50, true, false, undefined, false);
   // metadata is encrypted for user privacy
   await ensureStringAttribute("nfts", "metadata", 5000, false, false, undefined, true);
   // isActive is not encrypted - needed for filtering
-  await ensureBooleanAttribute("nfts", "isActive", true, false, true, false);
+  await ensureBooleanAttribute("nfts", "isActive", true, false, undefined, false);
   // Timestamps are not encrypted - needed for system functionality
   await ensureDatetimeAttribute("nfts", "createdAt", true, false, undefined, false);
   await ensureDatetimeAttribute("nfts", "updatedAt", true, false, undefined, false);
@@ -449,13 +462,13 @@ async function createMainCollections() {
   // publicKey is encrypted for user security
   await ensureStringAttribute("webauthn_credentials", "publicKey", 1500, true, false, undefined, true);
   // counter is not encrypted - needed for security validation
-  await ensureIntegerAttribute("webauthn_credentials", "counter", true, false, undefined, undefined, 0, false);
+  await ensureIntegerAttribute("webauthn_credentials", "counter", true, false, undefined, undefined, undefined, false);
   // deviceName is encrypted for user privacy
   await ensureStringAttribute("webauthn_credentials", "deviceName", 150, false, false, undefined, true);
   // deviceType is not encrypted - needed for filtering
   await ensureEnumAttribute("webauthn_credentials", "deviceType", ["platform", "cross-platform"], false, false, undefined, false);
   // isActive is not encrypted - needed for filtering
-  await ensureBooleanAttribute("webauthn_credentials", "isActive", true, false, true, false);
+  await ensureBooleanAttribute("webauthn_credentials", "isActive", true, false, undefined, false);
   // lastUsed is not encrypted - needed for functionality
   await ensureDatetimeAttribute("webauthn_credentials", "lastUsed", false, false, undefined, false);
   // Timestamps are not encrypted - needed for system functionality
@@ -496,7 +509,7 @@ async function createMainCollections() {
   // network is public blockchain data, not encrypted
   await ensureStringAttribute("defi_positions", "network", 50, true, false, undefined, false);
   // isActive is not encrypted - needed for filtering
-  await ensureBooleanAttribute("defi_positions", "isActive", true, false, true, false);
+  await ensureBooleanAttribute("defi_positions", "isActive", true, false, undefined, false);
   // Timestamps are not encrypted - needed for system functionality
   await ensureDatetimeAttribute("defi_positions", "createdAt", true, false, undefined, false);
   await ensureDatetimeAttribute("defi_positions", "updatedAt", true, false, undefined, false);
@@ -522,7 +535,7 @@ async function createMainCollections() {
   await ensureStringAttribute("app_settings", "value", 5000, true);
   await ensureStringAttribute("app_settings", "category", 50, true);
   await ensureStringAttribute("app_settings", "description", 200, false);
-  await ensureBooleanAttribute("app_settings", "isPublic", true, false, false);
+  await ensureBooleanAttribute("app_settings", "isPublic", true, false, undefined);
   await ensureDatetimeAttribute("app_settings", "createdAt", true);
   await ensureDatetimeAttribute("app_settings", "updatedAt", true);
 
@@ -543,13 +556,13 @@ async function createMainCollections() {
   // userId is a system reference, not encrypted
   await ensureStringAttribute("user_settings", "userId", 100, true, false, undefined, false);
   // theme is encrypted for user privacy
-  await ensureStringAttribute("user_settings", "theme", 20, true, false, "auto", true);
+  await ensureStringAttribute("user_settings", "theme", 20, true, false, undefined, true);
   // currency is encrypted for user privacy
-  await ensureStringAttribute("user_settings", "currency", 10, true, false, "USD", true);
+  await ensureStringAttribute("user_settings", "currency", 10, true, false, undefined, true);
   // language is encrypted for user privacy
-  await ensureStringAttribute("user_settings", "language", 10, true, false, "en", true);
+  await ensureStringAttribute("user_settings", "language", 10, true, false, undefined, true);
   // defaultNetwork is encrypted for user privacy
-  await ensureStringAttribute("user_settings", "defaultNetwork", 50, true, false, "ethereum", true);
+  await ensureStringAttribute("user_settings", "defaultNetwork", 50, true, false, undefined, true);
   // notifications are encrypted for user privacy
   await ensureStringAttribute("user_settings", "notifications", 5000, true, false, undefined, true);
   // security settings are encrypted for user privacy
