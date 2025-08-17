@@ -157,7 +157,9 @@ async function createMainCollections() {
     Permission.update(Role.user("USER_ID")),
     Permission.delete(Role.team("admin"))
   ]);
-  await ensureStringAttribute("users", "userId", 100, true, false, undefined, true);
+  // Appwrite encrypted strings require a minimum size of 150 characters.
+  // Use 200 to be safely above the limit for any encrypted identifiers.
+  await ensureStringAttribute("users", "userId", 200, true, false, undefined, true);
   await ensureEmailAttribute("users", "email", true, false, undefined);
   await ensureStringAttribute("users", "displayName", 100, false);
   await ensureUrlAttribute("users", "profileImage", false);
