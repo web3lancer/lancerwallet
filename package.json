@@ -15,8 +15,10 @@
     "@react-three/drei": "^10.6.1",
     "@react-three/fiber": "^9.3.0",
     "@simplewebauthn/server": "^13.1.2",
+    "@types/crypto-js": "^4.2.2",
     "appwrite": "^18.2.0",
     "bip39": "^3.1.0",
+    "crypto-js": "^4.2.0",
     "ethers": "^6.15.0",
     "framer-motion": "^12.23.12",
     "next": "15.4.6",
@@ -24,7 +26,8 @@
     "react-dom": "19.1.0",
     "react-loading-skeleton": "^3.5.0",
     "react-responsive": "^10.0.1",
-    "three": "^0.179.1"
+    "three": "^0.179.1",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
