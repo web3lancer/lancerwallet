@@ -531,7 +531,7 @@ async function createMainCollections() {
     Permission.delete(Role.team("admin"))
   ]);
   await ensureStringAttribute("app_settings", "settingId", 100, true, false, undefined, false);
-  await ensureStringAttribute("app_settings", "key", 100, true, false, undefined, true);
+  await ensureStringAttribute("app_settings", "key", 150, true, false, undefined, true);
   await ensureStringAttribute("app_settings", "value", 5000, true);
   await ensureStringAttribute("app_settings", "category", 50, true);
   await ensureStringAttribute("app_settings", "description", 200, false);
