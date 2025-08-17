@@ -1,13 +1,10 @@
 // Bootstrap complete Appwrite database, collections, storage, and config data
 // Requires env: APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY, APPWRITE_DATABASE_ID
 
-import {
-  Client,
-  Databases,
-  Permission,
-  Role,
-  Storage,
-} from 'appwrite';
+// Use the Node.js server SDK for administrative operations
+// and CommonJS require so this file runs with `node` without ESM config
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { Client, Databases, Storage, Permission, Role } = require('node-appwrite');
 
 const endpoint = process.env.APPWRITE_ENDPOINT;
 const projectId = process.env.APPWRITE_PROJECT_ID;
@@ -33,13 +30,13 @@ async function ensureDatabase() {
   }
 }
 
-async function ensureCollection(collectionId, name, permissions = undefined) {
+async function ensureCollection(collectionId, name, permissions = undefined, documentSecurity = true) {
   try {
     await db.getCollection(databaseId, collectionId);
     console.log(`Collection exists: ${collectionId}`);
   } catch (e) {
     console.log(`Creating collection: ${collectionId}`);
-    await db.createCollection(databaseId, collectionId, name, permissions);
+  await db.createCollection(databaseId, collectionId, name, permissions, documentSecurity);
   }
 }
 
@@ -56,6 +53,13 @@ async function ensureIntegerAttribute(collectionId, key, required = true, array 
   try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
     console.log(`Adding integer attribute: ${collectionId}.${key}`);
     await db.createIntegerAttribute(databaseId, collectionId, key, required, min, max, defaultValue, array);
+  }
+}
+
+async function ensureBooleanAttribute(collectionId, key, required = true, array = false, defaultValue = undefined) {
+  try { await db.getAttribute(databaseId, collectionId, key); } catch (e) {
+    console.log(`Adding boolean attribute: ${collectionId}.${key}`);
+    await db.createBooleanAttribute(databaseId, collectionId, key, required, defaultValue, array);
   }
 }
 
