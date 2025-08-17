@@ -233,22 +233,29 @@ await saveEncryptedWallet(wallet, password, userId);
               Create a new wallet or restore an existing one to get started with secure crypto management.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <button 
-                onClick={startCreate} 
-                className="btn-primary"
-                disabled={isLoading}
-                style={{ minWidth: '160px' }}
-              >
-                {isLoading ? '⏳ Creating...' : '🆕 Create New Wallet'}
-              </button>
-              <button 
-                onClick={startRestore} 
-                className="btn-secondary"
-                style={{ minWidth: '160px' }}
-              >
-                🔄 Restore Existing Wallet
-              </button>
-            </div>
+  <button 
+    onClick={startCreate} 
+    className="btn-primary"
+    disabled={isLoading}
+    style={{ minWidth: '160px' }}
+  >
+    {isLoading ? '⏳ Creating...' : '🆕 Create New Wallet'}
+  </button>
+  <button 
+    onClick={startRestore} 
+    className="btn-secondary"
+    style={{ minWidth: '160px' }}
+  >
+    🔄 Restore Existing Wallet
+  </button>
+  <button
+    onClick={() => window.location.href = '/auth'}
+    className="btn-ghost"
+    style={{ minWidth: '160px' }}
+  >
+    ✉️ Continue with Email
+  </button>
+</div>
           </div>
         )}
 
