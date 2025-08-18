@@ -4,8 +4,13 @@ import { useState } from 'react';
 import Button from '@/app/components/ui/Button';
 import Input from '@/app/components/ui/Input';
 import { login, signup } from './actions';
+import { appwriteAccount } from '@/lib/appwrite';
+import { useStore } from '@/lib/store';
+import { detectInjectedProviders, requestSignature } from '@/lib/appwrite/web3';
+import { ethers } from 'ethers';
 
 export default function AuthForm() {
+  const { setUser } = useStore();
   const [step, setStep] = useState(0); // 0: email, 1: password
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -104,7 +109,75 @@ export default function AuthForm() {
           </Button>
         </div>
       )}
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            Or continue with
+          </span>
+        </div>
+      </div>
+      <div>
+        <Button
+          onClick={handleWeb3Login}
+          disabled={isSubmitting}
+          className="w-full"
+          variant="outline"
+          type="button"
+        >
+          {isSubmitting ? 'Connecting...' : 'Login with Web3'}
+        </Button>
+      </div>
     </form>
   );
+
+  async function handleWeb3Login() {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const providers = detectInjectedProviders();
+      if (providers.length === 0 || !window.ethereum) {
+        setError("No Web3 provider detected. Please install MetaMask.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const address = accounts[0];
+
+      const nonceRes = await fetch("/api/auth/nonce");
+      const { key, nonce } = await nonceRes.json();
+
+      const signature = await requestSignature(address, `Sign this nonce: ${nonce}`);
+
+      const tokenRes = await fetch("/api/auth/custom-token/web3", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, signature, key, nonce }),
+      });
+
+      if (!tokenRes.ok) {
+        const { error } = await tokenRes.json();
+        throw new Error(error || "Failed to get session token.");
+      }
+
+      const { token } = await tokenRes.json();
+
+      await appwriteAccount.createSession(address, token);
+      const user = await appwriteAccount.get();
+      setUser(user);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 }
 

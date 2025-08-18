@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { getDecryptedWallets, WalletData } from '../../lib/wallet';
+import { useStore } from '@/lib/store';
+import { WalletData } from '../../lib/wallet';
+import { getNftsAction } from './actions';
+import { getWalletsAction } from '../wallets/actions';
 
 interface NFTItem {
   id: string;
@@ -17,55 +20,52 @@ interface NFTItem {
 export default function NFTPageClient() {
   const searchParams = useSearchParams();
   const walletParam = searchParams.get('wallet');
-  
+  const { user } = useStore();
+
   const [wallets, setWallets] = useState<WalletData[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string>('');
   const [nfts, setNfts] = useState<NFTItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadWallets = () => {
-// Replace with Appwrite-based wallet fetch
-const fetchWallets = async () => {
-  // You need to provide password and userId from context or props
-  const password = '';
-  const userId = '';
-  const storedWallets = await getDecryptedWallets(password, userId);
-  setWallets(storedWallets);
-
-  if (walletParam) {
-    const wallet = storedWallets.find((w: WalletData) => w.address === walletParam);
-    if (wallet) {
-      setSelectedWallet(wallet.address);
+    async function fetchWallets() {
+      if (!user) return;
+      try {
+        const fetchedWallets = await getWalletsAction();
+        setWallets(fetchedWallets as unknown as WalletData[]);
+        if (walletParam) {
+          const wallet = fetchedWallets.find((w) => w.address === walletParam);
+          if (wallet) {
+            setSelectedWallet(wallet.address);
+          }
+        } else if (fetchedWallets.length > 0) {
+          setSelectedWallet(fetchedWallets[0].address);
+        }
+      } catch (error) {
+        console.error('Error loading wallets:', error);
+      }
     }
-  } else if (storedWallets.length > 0) {
-    setSelectedWallet(storedWallets[0].address);
-  }
-};
-fetchWallets();
-    };
-
-    loadWallets();
-  }, [walletParam]);
+    fetchWallets();
+  }, [user, walletParam]);
 
   useEffect(() => {
-    const loadNFTs = async () => {
+    async function loadNFTs() {
       if (!selectedWallet) {
         setLoading(false);
         return;
       }
 
+      setLoading(true);
       try {
-        // Load NFTs from storage or API
-        const storedNFTs = JSON.parse(localStorage.getItem(`nfts_${selectedWallet}`) || '[]');
-        setNfts(storedNFTs);
+        const fetchedNfts = await getNftsAction(selectedWallet);
+        setNfts(fetchedNfts as unknown as NFTItem[]);
       } catch (error) {
         console.error('Error loading NFTs:', error);
         setNfts([]);
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     loadNFTs();
   }, [selectedWallet]);

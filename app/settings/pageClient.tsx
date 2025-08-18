@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import ThemeSelector from "../components/ThemeSelector";
+import ProfileSettings from '../components/ProfileSettings';
 
 interface SettingToggle {
   id: string;
@@ -93,6 +94,7 @@ export default function SettingsPageClient() {
   };
 
   const sections = [
+    { id: 'profile', name: 'Profile', icon: '👤' },
     { id: 'general', name: 'General', icon: '⚙️' },
     { id: 'security', name: 'Security', icon: '🔒' },
     { id: 'notifications', name: 'Notifications', icon: '🔔' },
@@ -238,6 +240,11 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
 
         {/* Settings Content */}
         <main className="lg:col-span-3">
+          {/* Profile Settings */}
+          {activeSection === 'profile' && (
+            <ProfileSettings />
+          )}
+
           {/* General Settings */}
           {activeSection === 'general' && (
             <div className="space-y-6">

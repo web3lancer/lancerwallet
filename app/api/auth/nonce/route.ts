@@ -1,15 +1,50 @@
 import { NextResponse } from 'next/server';
-import { randomBytes } from 'crypto';
-import { createNonce } from './store';
+import { nonces } from '@/lib/appwrite/databases';
+import { ID, Query } from 'appwrite';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function GET() {
-  const nonce = randomBytes(16).toString('hex');
-  const key = cryptoRandomKey();
-  createNonce(key, nonce);
-  // Return both key and nonce; client must send both back when signing
+  const key = uuidv4();
+  const nonce = uuidv4();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes from now
+  const now = new Date().toISOString();
+
+  await nonces.create(ID.unique(), {
+    nonceId: key,
+    key,
+    nonce,
+    expiresAt,
+    used: false,
+    createdAt: now,
+  });
+
   return NextResponse.json({ key, nonce });
 }
 
-function cryptoRandomKey() {
-  return randomBytes(8).toString('hex');
+export async function verifyAndConsumeNonceFromDB(key: string, nonce: string): Promise<boolean> {
+    const response = await nonces.list([
+        Query.equal("key", key),
+        Query.equal("nonce", nonce),
+    ]);
+
+    if (response.total === 0) {
+        return false;
+    }
+
+    const nonceDoc = response.documents[0];
+
+    if (nonceDoc.used) {
+        return false;
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(nonceDoc.expiresAt);
+
+    if (now > expiresAt) {
+        return false;
+    }
+
+    await nonces.update(nonceDoc.$id, { used: true });
+
+    return true;
 }

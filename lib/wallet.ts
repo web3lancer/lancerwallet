@@ -119,33 +119,30 @@ export async function sendTransaction(
   }
 }
 
+import { createWalletAction, getWalletsAction } from '@/app/wallets/actions';
+
 export async function saveEncryptedWallet(walletData: WalletData, userPassword: string, userId: string): Promise<void> {
   if (!walletData.privateKey) {
     throw new Error('Private key is required to save an encrypted wallet.');
   }
   const encryptedWallet = encryptData(walletData, userPassword);
-  const databases = AppwriteSDK.adminDatabases;
-  await databases.createDocument(
-    AppwriteSDK.config.databaseId,
-    AppwriteSDK.config.collectionId,
-    ID.unique(),
-    {
-      userId,
-      address: walletData.address,
-      network: walletData.network,
-      encryptedWalletData: encryptedWallet,
-    }
-  );
+  const now = new Date().toISOString();
+  await createWalletAction(ID.unique(), {
+    userId,
+    address: walletData.address,
+    name: walletData.name,
+    network: walletData.network,
+    encryptedWalletData: encryptedWallet,
+    walletType: 'mnemonic',
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  });
 }
 
 export async function getDecryptedWallets(userPassword: string, userId: string): Promise<WalletData[]> {
-  const databases = AppwriteSDK.adminDatabases;
-  const response = await databases.listDocuments(
-    AppwriteSDK.config.databaseId,
-    AppwriteSDK.config.collectionId,
-    [Query.equal('userId', userId)]
-  );
-  const decryptedWallets = response.documents.map((doc) => {
+  const documents = await getWalletsAction();
+  const decryptedWallets = documents.map((doc) => {
     const decrypted = decryptData<WalletData>(doc.encryptedWalletData, userPassword);
     if (!decrypted) {
       console.error(`Failed to decrypt wallet ${doc.address}. The password may be incorrect.`);
