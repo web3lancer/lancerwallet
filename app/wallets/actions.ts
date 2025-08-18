@@ -3,6 +3,7 @@
 import { wallets } from "@/lib/appwrite/databases";
 import { getSessionAccount } from "@/lib/appwrite/server";
 import { Query } from "appwrite";
+import { AppwriteSDK } from "@/lib/appwrite";
 
 export async function getWalletsAction() {
   const account = await getSessionAccount();
@@ -28,4 +29,13 @@ export async function createWalletAction(
   }
 ) {
   return await wallets.create(walletId, data);
+}
+
+export async function getTokensAction(walletId: string) {
+  const response = await AppwriteSDK.adminDatabases.listDocuments(
+    AppwriteSDK.config.databaseId,
+    AppwriteSDK.config.collections.tokens,
+    [Query.equal("walletId", walletId)]
+  );
+  return response.documents;
 }

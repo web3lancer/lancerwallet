@@ -5,6 +5,7 @@ import { useStore } from '@/lib/store';
 import Button from '@/app/components/ui/Button';
 import Input from '@/app/components/ui/Input';
 import Card from '@/app/components/ui/Card';
+import TokenList from '../components/TokenList';
 
 export default function WalletsPageClient() {
   const {
@@ -156,6 +157,7 @@ export default function WalletsPageClient() {
                 <p className="text-sm text-gray-500">{wallet.network}</p>
               </div>
             </div>
+            <TokenList walletId={wallet.address} />
           </Card>
         ))}
         

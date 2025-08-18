@@ -9,6 +9,8 @@ import { ethers } from 'ethers';
 import Button from '@/app/components/ui/Button';
 import Input from '@/app/components/ui/Input';
 import Card from '@/app/components/ui/Card';
+import { createTransactionAction } from './actions';
+import { ID } from 'appwrite';
 
 export default function SendPageClient() {
   const searchParams = useSearchParams();
@@ -59,6 +61,24 @@ export default function SendPageClient() {
         selectedWallet.network
       );
       setTxHash(hash);
+
+      if (useStore.getState().user) {
+        await createTransactionAction({
+          transactionId: ID.unique(),
+          userId: useStore.getState().user!.$id,
+          walletId: selectedWallet.address,
+          hash,
+          fromAddress: selectedWallet.address,
+          toAddress: recipient,
+          value: amount,
+          network: selectedWallet.network,
+          status: 'completed',
+          type: 'send',
+          timestamp: new Date().toISOString(),
+          notes: '',
+        });
+      }
+
       setStep('success');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Transaction failed.');
