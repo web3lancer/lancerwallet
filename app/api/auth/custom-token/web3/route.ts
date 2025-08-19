@@ -35,9 +35,15 @@ export async function POST(req: Request) {
 
   try {
     const { adminClient } = AppwriteSDK;
-    // import node-appwrite classes using ESM import style
-    const { Users, Account } = await import("node-appwrite");
-    const users = new Users(adminClient);
+    // node-appwrite expects its own Client instance. Create a node-appwrite Client and copy endpoint/project
+    const nodeAppwrite = await import("node-appwrite");
+    const NodeClient = nodeAppwrite.Client;
+    const Users = nodeAppwrite.Users;
+    const Account = nodeAppwrite.Account;
+    const nodeClient = new NodeClient()
+      .setEndpoint(adminClient.config.endpoint)
+      .setProject(adminClient.config.project);
+    const users = new Users(nodeClient);
 
     // Check if user exists
     let user;
@@ -51,7 +57,7 @@ export async function POST(req: Request) {
     }
 
     // Create a session for the user and return a session token
-    const account = new Account(adminClient);
+    const account = new Account(nodeClient);
     const session = await account.createMagicURLToken(user.$id, address);
 
     return NextResponse.json({ token: session.secret });
