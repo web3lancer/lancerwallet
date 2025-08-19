@@ -50,5 +50,5 @@ async function verifyAndConsumeNonceFromDB(key: string, nonce: string): Promise<
     return true;
 }
 
-// export via default object for internal imports
-export default { verifyAndConsumeNonceFromDB };
+// expose helper via a named module file instead to avoid Next route export conflicts
+// Create a separate utils file will be used; for now export nothing from this route

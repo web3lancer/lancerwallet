@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { recoverAddress } from "../../../../../lib/appwrite/web3";
-import nonceUtils from "../../nonce/route";
-const { verifyAndConsumeNonceFromDB } = nonceUtils;
+// import nonce helper from dedicated util file
+import { verifyAndConsumeNonceFromDB } from "@/lib/auth/nonce";
 import { AppwriteSDK } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 
