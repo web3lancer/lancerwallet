@@ -21,7 +21,8 @@ export async function GET() {
   return NextResponse.json({ key, nonce });
 }
 
-export async function verifyAndConsumeNonceFromDB(key: string, nonce: string): Promise<boolean> {
+// helper not exported to avoid Next.js route type errors
+async function verifyAndConsumeNonceFromDB(key: string, nonce: string): Promise<boolean> {
     const response = await nonces.list([
         Query.equal("key", key),
         Query.equal("nonce", nonce),
@@ -48,3 +49,6 @@ export async function verifyAndConsumeNonceFromDB(key: string, nonce: string): P
 
     return true;
 }
+
+// export via default object for internal imports
+export default { verifyAndConsumeNonceFromDB };
