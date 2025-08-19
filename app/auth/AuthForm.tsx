@@ -124,7 +124,7 @@ export default function AuthForm() {
           onClick={handleWeb3Login}
           disabled={isSubmitting}
           className="w-full"
-          variant="outline"
+          variant="secondary"
           type="button"
         >
           {isSubmitting ? 'Connecting...' : 'Login with Web3'}
@@ -138,15 +138,19 @@ export default function AuthForm() {
     setError(null);
     try {
       const providers = detectInjectedProviders();
-      if (providers.length === 0 || !window.ethereum) {
-        setError("No Web3 provider detected. Please install MetaMask.");
-        setIsSubmitting(false);
-        return;
-      }
+      // Access injected provider safely
+      // Narrow type using Window & { ethereum?: { request?: (args: any) => Promise<any> } }
+      const win = window as Window & { ethereum?: { request?: (...args: any[]) => Promise<any> } };
+      if (providers.length === 0 || !win.ethereum) {
+          setError("No Web3 provider detected. Please install MetaMask.");
+          setIsSubmitting(false);
+          return;
+        }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
-      const address = accounts[0];
+        const provider = new ethers.BrowserProvider(win.ethereum as any);
+        const accounts = await provider.send("eth_requestAccounts", []);
+        const address = accounts[0];
+
 
       const nonceRes = await fetch("/api/auth/nonce");
       const { key, nonce } = await nonceRes.json();
