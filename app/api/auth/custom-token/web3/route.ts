@@ -33,8 +33,10 @@ export async function POST(req: Request) {
     );
 
   try {
-    const { adminClient, config } = AppwriteSDK;
-    const users = new (require("node-appwrite").Users)(adminClient);
+    const { adminClient } = AppwriteSDK;
+    // import node-appwrite classes using ESM import style
+    const { Users, Account } = await import("node-appwrite");
+    const users = new Users(adminClient);
 
     // Check if user exists
     let user;
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
     }
 
     // Create a session for the user and return a session token
-    const account = new (require("node-appwrite").Account)(adminClient);
+    const account = new Account(adminClient);
     const session = await account.createMagicURLToken(user.$id, address);
 
     return NextResponse.json({ token: session.secret });
