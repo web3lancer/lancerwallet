@@ -3,7 +3,7 @@ import { recoverAddress } from "../../../../../lib/appwrite/web3";
 // import nonce helper from dedicated util file
 import { verifyAndConsumeNonceFromDB } from "@/lib/auth/nonce";
 import { AppwriteSDK } from "@/lib/appwrite";
-import { ID, Query } from "appwrite";
+// no direct appwrite SDK imports needed in this route; using node-appwrite for server admin operations
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -35,32 +35,35 @@ export async function POST(req: Request) {
 
   try {
     const { adminClient } = AppwriteSDK;
-    // node-appwrite expects its own Client instance. Create a node-appwrite Client and copy endpoint/project
+    // Create a node-appwrite client with admin privileges (API key must be set in server env)
     const nodeAppwrite = await import("node-appwrite");
     const NodeClient = nodeAppwrite.Client;
     const Users = nodeAppwrite.Users;
-    const Account = nodeAppwrite.Account;
     const nodeClient = new NodeClient()
       .setEndpoint(adminClient.config.endpoint)
-      .setProject(adminClient.config.project);
+      .setProject(adminClient.config.project)
+      .setKey(process.env.APPWRITE_API_KEY || process.env.APPWRITE_KEY || adminClient.config.devkey);
     const users = new Users(nodeClient);
 
-    // Check if user exists
-    let user;
-    const existingUsers = await users.list([Query.equal("name", address)]);
+    // node-appwrite expects its own Client instance. Create a node-appwrite Client and copy endpoint/project
+    // Use deterministic user id derived from wallet address to ensure 1:1 mapping
+    const normalized = address.toLowerCase();
+    const deterministicId = `wallet:${normalized}`;
 
-    if (existingUsers.total > 0) {
-      user = existingUsers.users[0];
-    } else {
-      // Create user if not exists
-      user = await users.create(ID.unique(), undefined, undefined, undefined, address);
+    // Try to get user by ID first
+    let user;
+    try {
+      user = await users.get(deterministicId);
+    } catch (e) {
+      // If not found, create the user with deterministic id and set name to the address
+      user = await users.create(deterministicId, undefined, undefined, undefined, normalized);
     }
 
-    // Create a session for the user and return a session token
-    const account = new Account(nodeClient);
-    const session = await account.createMagicURLToken(user.$id, address);
+    // Create a custom token for the user that the client will exchange for a session
+    // node-appwrite Users.createToken takes expiry (seconds) and optional length as separate params
+    const token = await users.createToken(user.$id, 60 * 10, 6);
 
-    return NextResponse.json({ token: session.secret });
+    return NextResponse.json({ token: token.secret });
   } catch (error) {
     console.error("Error during Appwrite user creation/session:", error);
     return NextResponse.json(
