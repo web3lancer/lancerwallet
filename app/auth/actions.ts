@@ -6,6 +6,9 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { appwriteAccount } from '@/lib/appwrite';
 import { ethers } from 'ethers';
+import { recoverAddress } from '@/lib/appwrite/web3';
+import { verifyAndConsumeNonceFromDB, generateNonceForDB } from '@/lib/auth/nonce';
+import { AppwriteSDK } from '@/lib/appwrite';
 
 interface WalletAuthParams {
   method: 'create' | 'import';
@@ -43,41 +46,78 @@ export async function walletAuth({ method, password, seedPhrase }: WalletAuthPar
     const walletData = await createWalletFromMnemonic(mnemonic);
     const address = walletData.address;
 
-    // Get nonce for signature
-    const nonceRes = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/nonce`);
-    if (!nonceRes.ok) {
-      return { error: 'Failed to get authentication nonce' };
-    }
-    
-    const { key, nonce } = await nonceRes.json();
+    // Generate nonce directly on server
+    const { key, nonce } = await generateNonceForDB();
     const message = `Sign this nonce: ${nonce}`;
     
     // Create ethers wallet to sign the message
     const ethersWallet = ethers.Wallet.fromPhrase(mnemonic);
     const signature = await ethersWallet.signMessage(message);
 
-    // Get custom token from server
-    const tokenRes = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/custom-token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method: 'wallet',
-        address,
-        signature,
-        key,
-        nonce,
-      }),
-    });
-
-    if (!tokenRes.ok) {
-      const { error } = await tokenRes.json();
-      return { error: error || 'Failed to get session token' };
+    // Verify signature server-side
+    let recovered: string;
+    try {
+      recovered = recoverAddress(message, signature);
+    } catch {
+      return { error: 'Invalid signature' };
     }
 
-    const { token } = await tokenRes.json();
+    if (recovered.toLowerCase() !== address.toLowerCase()) {
+      return { error: 'Signature does not match address' };
+    }
 
-    // Create session with Appwrite
-    const session = await appwriteAccount.createSession(address, token);
+    // Verify and consume nonce
+    const ok = await verifyAndConsumeNonceFromDB(key, nonce);
+    if (!ok) {
+      return { error: 'Invalid or expired nonce' };
+    }
+
+    // Create Appwrite user and token server-side
+    const { adminClient } = AppwriteSDK;
+    const nodeAppwrite = await import("node-appwrite");
+    const NodeClient = nodeAppwrite.Client;
+    const Users = nodeAppwrite.Users;
+    
+    const nodeClient = new NodeClient()
+      .setEndpoint(adminClient.config.endpoint)
+      .setProject(adminClient.config.project)
+      .setKey(process.env.APPWRITE_API_KEY || process.env.APPWRITE_KEY || adminClient.config.devkey);
+    
+    const users = new Users(nodeClient);
+    
+    // Deterministic user ID
+    const userId = `wallet:${address.toLowerCase()}`;
+    
+    // Try to get user by ID first
+    let user;
+    try {
+      user = await users.get(userId);
+    } catch (e) {
+      // If not found, create the user
+      user = await users.create(
+        userId,
+        undefined, // email
+        undefined, // phone  
+        undefined, // password
+        address.toLowerCase() // name
+      );
+      
+      // Set user preferences to store metadata
+      try {
+        await users.updatePrefs(userId, {
+          provider: 'wallet',
+          address: address.toLowerCase(),
+        });
+      } catch (prefError) {
+        console.warn("Failed to set user preferences:", prefError);
+      }
+    }
+
+    // Create a custom token
+    const token = await users.createToken(user.$id, 60 * 60, 6); // 1 hour expiry
+
+    // Create session with Appwrite using client SDK
+    const session = await appwriteAccount.createSession(address, token.secret);
     
     // Set session cookie
     (await cookies()).set('appwrite-session', session.secret, {
@@ -88,9 +128,6 @@ export async function walletAuth({ method, password, seedPhrase }: WalletAuthPar
       expires: new Date(session.expire),
     });
 
-    // Get user to determine userId for wallet storage
-    const user = await appwriteAccount.get();
-    
     // Save encrypted wallet
     await saveEncryptedWallet(walletData, password, user.$id);
 

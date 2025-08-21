@@ -1,5 +1,24 @@
 import { nonces } from '@/lib/appwrite/databases';
-import { Query } from 'appwrite';
+import { Query, ID } from 'appwrite';
+import { v4 as uuidv4 } from 'uuid';
+
+export async function generateNonceForDB(): Promise<{ key: string; nonce: string }> {
+    const key = uuidv4();
+    const nonce = uuidv4();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes from now
+    const now = new Date().toISOString();
+
+    await nonces.create(ID.unique(), {
+        nonceId: key,
+        key,
+        nonce,
+        expiresAt,
+        used: false,
+        createdAt: now,
+    });
+
+    return { key, nonce };
+}
 
 export async function verifyAndConsumeNonceFromDB(key: string, nonce: string): Promise<boolean> {
     const response = await nonces.list([
