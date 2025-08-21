@@ -140,14 +140,13 @@ export default function AuthForm() {
       const providers = detectInjectedProviders();
       // Access injected provider safely
       // Narrow type using Window & { ethereum?: { request?: (args: any) => Promise<any> } }
-      const win = window as Window & { ethereum?: { request?: (...args: any[]) => Promise<any> } };
-      if (providers.length === 0 || !win.ethereum) {
+      if (providers.length === 0 || !window.ethereum) {
           setError("No Web3 provider detected. Please install MetaMask.");
           setIsSubmitting(false);
           return;
         }
 
-        const provider = new ethers.BrowserProvider(win.ethereum as any);
+        const provider = new ethers.BrowserProvider(window.ethereum);
         const accounts = await provider.send("eth_requestAccounts", []);
         const address = accounts[0];
 

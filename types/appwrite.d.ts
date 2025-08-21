@@ -23,7 +23,15 @@ export type Users = Models.Document & {
     accountStatus: AccountStatus;
     createdAt: string;
     updatedAt: string;
+    prefs?: { avatar_id?: string } & Record<string, any>;
+    };
+
+declare global {
+  namespace Models {
+    type Preferences = { [key: string]: any } & { avatar_id?: string };
+  }
 }
+
 
 export type Wallets = Models.Document & {
     walletId: string;

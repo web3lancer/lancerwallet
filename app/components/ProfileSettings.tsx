@@ -13,8 +13,8 @@ export default function ProfileSettings() {
   const [displayName, setDisplayName] = useState(user?.name || "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    user?.prefs.avatar_id
-      ? userAvatars.getView(user.prefs.avatar_id).href
+    user && (user.prefs as any)?.avatar_id
+      ? (userAvatars.getView((user.prefs as any).avatar_id as string) as any).href
       : null
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,7 @@ export default function ProfileSettings() {
     setError(null);
 
     try {
-      let avatarId = user.prefs.avatar_id;
+      let avatarId = (user.prefs as any)?.avatar_id;
 
       if (avatarFile) {
         if (avatarId) {
@@ -97,7 +97,7 @@ export default function ProfileSettings() {
           <Button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            variant="outline"
+            variant="secondary"
           >
             Change Avatar
           </Button>
