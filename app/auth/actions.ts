@@ -5,6 +5,7 @@ import { generateMnemonic, createWalletFromMnemonic, saveEncryptedWallet } from 
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { appwriteAccount } from '@/lib/appwrite';
+import { ethers } from 'ethers';
 
 interface WalletAuthParams {
   method: 'create' | 'import';
@@ -39,8 +40,8 @@ export async function walletAuth({ method, password, seedPhrase }: WalletAuthPar
       mnemonic = generateMnemonic();
     }
 
-    const wallet = await createWalletFromMnemonic(mnemonic);
-    const address = wallet.address;
+    const walletData = await createWalletFromMnemonic(mnemonic);
+    const address = walletData.address;
 
     // Get nonce for signature
     const nonceRes = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/nonce`);
@@ -50,7 +51,10 @@ export async function walletAuth({ method, password, seedPhrase }: WalletAuthPar
     
     const { key, nonce } = await nonceRes.json();
     const message = `Sign this nonce: ${nonce}`;
-    const signature = await wallet.signMessage(message);
+    
+    // Create ethers wallet to sign the message
+    const ethersWallet = ethers.Wallet.fromPhrase(mnemonic);
+    const signature = await ethersWallet.signMessage(message);
 
     // Get custom token from server
     const tokenRes = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/custom-token`, {
@@ -88,7 +92,7 @@ export async function walletAuth({ method, password, seedPhrase }: WalletAuthPar
     const user = await appwriteAccount.get();
     
     // Save encrypted wallet
-    await saveEncryptedWallet(wallet, password, user.$id);
+    await saveEncryptedWallet(walletData, password, user.$id);
 
   } catch (error: unknown) {
     if (error instanceof Error) {
