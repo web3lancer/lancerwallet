@@ -1,110 +1,161 @@
-Goal
+# Wallet-as-Identity Authentication Plan
 
-Consolidate authentication into a single-step Appwrite custom-token flow where each wallet (Ethereum address) maps 1:1 to an Appwrite user account. This will allow creating a wallet and immediately signing in without separate backup steps and enable future multi-account containers.
+## Core Principle: Wallet IS Authentication
 
-High-level approach
+The crypto wallet itself (generated from mnemonic seed phrase or imported) serves as the primary authentication mechanism. Each wallet maps 1:1 to an Appwrite user account, eliminating traditional email/password flows.
 
-- Server: Provide a unified endpoint that verifies a wallet proof (web3 signature), ensures an Appwrite user exists for that wallet address (use wallet address as deterministic identifier or name), creates a custom token via Appwrite Users.createToken, and returns the token secret to the client.
-- Client: Exchange the token secret with Appwrite Client SDK (Account.createSession) to create an authenticated session. Persist session via HTTP-only cookie set by server-side action (recommended) or client SDK.
+**Key insight**: The wallet's private key is the user's identity credential. Authentication proves ownership via cryptographic signature, and wallet security is protected by password and/or passkey encryption.
 
-Why this design
+## Authentication Flow
 
-- Appwrite custom-token flow is designed for exactly this: server-side validation then token issuance that clients exchange for sessions in one step.
-- Mapping each wallet to its own Appwrite account enables straightforward syncing and storage per-wallet and simplifies future multi-account support.
+1. **Wallet Creation/Import**
+   - User generates new mnemonic (12/24 words) OR imports existing seed phrase
+   - Wallet derives private/public keypair and Ethereum address from seed
 
-Implementation steps
+2. **Local Protection Layer**
+   - Wallet encrypted locally using user-chosen password
+   - Optional: Additional passkey protection (configurable in settings later)
+   - Seed phrase stored encrypted; never transmitted to server
 
-1. Inspect existing endpoints and helpers (done).
-2. Implement unified server endpoint at app/api/auth/custom-token/route.ts that accepts { method, address, signature, nonce, key } (for web3 method initially).
-   - Validate signature and nonce (reuse recoverAddress and verifyAndConsumeNonceFromDB).
-   - Use node-appwrite Users API to find or create a user with a deterministic ID: use the wallet address as user "name" and as the userId namespace (use ID.custom with prefix or ID.unique?). Prefer using Users.create with ID = `wallet:${address.toLowerCase()}` to keep deterministic mapping.
-   - Create a token using Users.createToken(userId, { expires, length }) and return the token.secret to the client.
-3. Update frontend auth action (app/auth/actions.ts and AuthForm) to call the new endpoint and then call Appwrite client SDK (Account.createSession) with the returned token secret to create a session. After session created, set a HTTP-only cookie 'appwrite-session' with the session.secret via server action (cookies API) to make SSR session management seamless.
-4. Update env.sample to include APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY (server key), and note that they must be set in deployment.
-5. Add error handling and rate-limiting notes; keep old endpoints as fallback during migration.
+3. **Authentication via Signature**
+   - Server provides nonce challenge
+   - Client signs nonce with wallet's private key
+   - Server verifies signature matches wallet address
 
-Files to change
+4. **Identity Mapping**
+   - Server maps wallet address to deterministic Appwrite user ID: `wallet:${address.toLowerCase()}`
+   - Creates Appwrite user if doesn't exist; retrieves if exists
+   - No email/username required - wallet address IS the identity
 
-- app/api/auth/custom-token/web3/route.ts -> move logic into app/api/auth/custom-token/route.ts unified endpoint and adjust user creation to deterministic ID.
-- app/auth/actions.ts -> add new function to perform web3 login flow: call internal API to get token secret, exchange with Appwrite client SDK, store cookie and redirect.
-- lib/appwrite/server.ts -> add server-side helper to instantiate admin client using server API key (process.env.APPWRITE_API_KEY) for Users.createToken.
-- env.sample -> add APPWRITE_API_KEY and clarify required envs.
+5. **Session Creation**
+   - Server issues Appwrite custom token
+   - Client exchanges token for authenticated session
+   - Session persisted via HTTP-only cookie for SSR
 
-Security considerations
+## Benefits
 
-- Use server API key to talk to Appwrite admin APIs. Keep secret out of client.
-- Nonce replay protection must be enforced (existing DB-based nonce usage retained).
-- Rate-limit token endpoint and monitor for abuse.
-- Validate signature strictly and normalize addresses to lowercase.
+- **Single-step auth**: Wallet creation = identity creation = authentication
+- **Self-sovereign**: Users control identity via seed phrase ownership
+- **Multi-device sync**: Same wallet authenticates across devices with proper decryption
+- **Future-ready**: Each wallet becomes separate account; enables multi-wallet containers later
+- **No vendor lock-in**: Users can export seed phrase and use elsewhere
 
-Migration/rollout plan
+## Security Model
 
-- Deploy unified endpoint alongside existing endpoints.
-- Update frontend to call new flow; keep old code path behind feature flag if needed.
-- Monitor logs for user creation collisions or errors.
+**Primary Security**: Seed phrase (24-word mnemonic)
+- Master secret that generates all wallet keypairs
+- User responsible for secure backup/storage
 
-Verification
+**Secondary Security**: Local encryption
+- Password: Required to decrypt wallet locally
+- Passkey: Optional additional factor (biometric/hardware key)
+- Both configurable in app settings
 
-- Manual test: sign in with a wallet, ensure new Appwrite user is created with deterministic id/name, client obtains session and cookie, account.get() returns expected user.
-- Edge cases: repeated sign-ins, revoked tokens, user creation race conditions.
+**Server Security**: Signature verification
+- Nonce prevents replay attacks
+- Address recovery validates wallet ownership
+- No private keys ever transmitted
 
-Follow-ups
+## Implementation Steps
 
-- Add automated tests for the server endpoint.
-- Implement passkey/nonce methods in same unified endpoint.
-- Consider migrating storage structure to map external identities to Appwrite userIds explicitly.
+### 1. Server-side Custom Token Endpoint
+File: `app/api/auth/custom-token/web3/route.ts` (already in progress)
 
+```typescript
+// Request: { address, signature, nonce, key }
+// Response: { token: "6-char-secret" }
+```
 
+Process:
+- Verify signature matches address via `recoverAddress(nonce, signature)`
+- Validate and consume nonce to prevent replay
+- Find/create Appwrite user with ID `wallet:${address.toLowerCase()}`
+- Issue custom token via `users.createToken(userId, expiry, length)`
+- Return token secret to client
 
-## Auth: wallet-presence authentication
+### 2. Frontend Auth Action
+File: `app/auth/actions.ts`
 
-Goal
+Add `walletLogin(address, signature, nonce, key)`:
+- Call custom-token endpoint with wallet proof
+- Exchange returned token secret with `account.createSession(tokenSecret)`
+- Set HTTP-only session cookie for SSR
+- Redirect to `/home`
 
-- Authenticate users by the mere presence or creation of a wallet (Ethereum address) without requiring traditional email/password flows. The server will accept a proof of wallet control (signature) or detect wallet creation and issue a session token mapped 1:1 with an Appwrite user account.
+### 3. Environment Variables
+File: `env.sample`
 
-Approach
+Add required server variables:
+```
+APPWRITE_API_KEY=your_server_api_key_here
+APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+APPWRITE_PROJECT_ID=your_project_id
+```
 
-- Presence-based auth: when a client connects with a wallet address, validate control by asking for a lightweight proof (e.g., signed timestamp or nonce). If a wallet is present but has no existing Appwrite account, create one deterministically and issue a session token so the user is immediately authenticated.
+### 4. Wallet Protection Integration
+Files: `lib/wallet.ts`, wallet creation flows
 
-- Passive detection (optional): for embedded wallet flows where creation occurs in-client, the client can notify the server once wallet is generated and provide the initial proof to obtain a session without additional onboarding.
+Ensure wallet encryption uses:
+- Password: Required for local decryption
+- Passkey: Optional second factor (implement in settings)
+- Seed phrase: Securely stored encrypted, never sent to server
 
-Design details
+## API Shapes
 
-- Deterministic user mapping: use a deterministic Appwrite userId namespace such as `wallet:{addressLower}` so a wallet always resolves to the same Appwrite user. Store minimal metadata (createdAt, provider=wallet, lastSeen).
+### Custom Token Request
+```typescript
+POST /api/auth/custom-token/web3
+{
+  "address": "0x742d35Cc6634C0532925a3b8D0C28f5fC",
+  "signature": "0x...",
+  "nonce": "abc123",
+  "key": "nonce-session-key"
+}
+```
 
-- Proof types supported:
-  - Web3 signature of a server-provided nonce (required for first-time auth)
-  - Signed timestamp for quick re-authentication (short-lived)
-  - Optional: wallet connect or on-device passkey linkage for richer UX
+### Custom Token Response
+```typescript
+{
+  "token": "a1b2c3"  // 6-char secret for account.createSession()
+}
+```
 
-- Nonce handling: server issues a single-use nonce tied to the address; nonce consumption must be atomic to avoid replay and race conditions.
+### Client Session Exchange
+```typescript
+const session = await account.createSession(tokenSecret);
+// Session automatically stored in SDK; set HTTP-only cookie for SSR
+```
 
-- Session issuance: after verifying proof, server ensures Appwrite user exists and creates a custom token secret returned to client to exchange for Appwrite session.
+## Security Checklist
 
-- Minimal UX friction: reduce fields and steps on the client. No email/password or email verification required to sign in with a wallet. Recommend offering an optional backup (recovery phrase export or link to add email) but do not require it.
+- [ ] Nonce replay protection enforced
+- [ ] Signature validation prevents address spoofing  
+- [ ] Rate limiting on token endpoint
+- [ ] Server API key kept secure (not in client)
+- [ ] Deterministic user creation prevents ID collisions
+- [ ] Wallet encryption protects seed phrase locally
+- [ ] Session cookies marked HTTP-only and Secure
 
-Security considerations
+## Migration Plan
 
-- Account takeover risks: deterministic creation means anyone who can sign from the address can impersonate the account — that's expected for wallet-auth models. Encourage optional account recovery methods and multi-factor mappings for high-value users.
+1. Deploy new endpoint alongside existing auth
+2. Update frontend to use wallet-auth flow
+3. Test with existing users (if any)
+4. Monitor for user creation conflicts
+5. Gradually deprecate email/password flows
 
-- Rate-limiting and abuse detection on token issuance and nonce generation.
+## Future Enhancements
 
-- Require signatures for first-time auth; passive notifications alone must be validated with proof before issuing tokens.
+- **Multi-wallet containers**: Allow users to manage multiple wallet identities
+- **Passkey integration**: Add biometric/hardware key as secondary auth factor
+- **Recovery options**: Optional email backup for account recovery
+- **Hardware wallet support**: Direct integration with Ledger/Trezor for signing
 
-- Monitor for duplicate wallet creation and potential race conditions; use DB transactions or unique constraints on user mapping.
+## Verification Tests
 
-UX notes
-
-- Onboarding flow should highlight that possession of the wallet controls the account; provide clear warnings about private key safety.
-
-- Offer a lightweight 'add recovery' modal post-sign-in to optionally attach an email or passkey for recovery.
-
-Open questions
-
-- Do we want to allow multiple wallets to map to the same Appwrite user (user-managed containers) or strictly 1:1? Current plan is 1:1 but consider later multi-wallet containers.
-
-- How aggressive should passive detection be? For privacy, avoid automatic telemetry; require explicit client consent to register wallet presence.
-
-- Decide if wallet creation should auto-grant certain default profiles/permissions or require minimal setup.
-
+1. **New wallet creation**: Generate mnemonic → encrypt with password → sign nonce → verify Appwrite user created
+2. **Existing wallet import**: Import seed phrase → decrypt with password → authenticate → verify existing user retrieved  
+3. **Session persistence**: Authenticate → close browser → reopen → verify still logged in
+4. **Multi-device**: Same wallet on different devices → both authenticate to same Appwrite user
+5. **Security**: Wrong password/signature → authentication fails
 
