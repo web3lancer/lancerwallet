@@ -4,17 +4,23 @@ import React, { useState, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { userAvatars } from "@/lib/appwrite/storage";
 import { users } from "@/lib/appwrite/databases";
+import type { Models } from "appwrite";
 import Button from "./ui/Button";
 import Card from "./ui/Card";
 import { appwriteAccount } from "@/lib/appwrite";
 
+interface UserPrefs extends Models.Preferences {
+  avatar_id?: string;
+}
+
 export default function ProfileSettings() {
   const { user, setUser } = useStore();
+  const userPrefs = user?.prefs as UserPrefs;
   const [displayName, setDisplayName] = useState(user?.name || "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    user && (user.prefs as any)?.avatar_id
-      ? (userAvatars.getView((user.prefs as any).avatar_id as string) as any).href
+    user && userPrefs?.avatar_id
+      ? userAvatars.getView(userPrefs.avatar_id).href
       : null
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +47,7 @@ export default function ProfileSettings() {
     setError(null);
 
     try {
-      let avatarId = (user.prefs as any)?.avatar_id;
+      let avatarId = userPrefs?.avatar_id;
 
       if (avatarFile) {
         if (avatarId) {

@@ -44,8 +44,8 @@ export async function verifyAndConsumeNonceMessage(message: string): Promise<boo
   let nonceDoc;
   try {
     nonceDoc = await serverAdmin.databases.getDocument(DB_ID, NONCE_COLLECTION_ID, nonce);
-  } catch (e: any) {
-    if (e.code === 404) {
+  } catch (e: unknown) {
+    if (typeof e === 'object' && e !== null && 'code' in e && (e as { code: unknown }).code === 404) {
       return false; // Nonce not found
     }
     throw e;

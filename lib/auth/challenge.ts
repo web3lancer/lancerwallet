@@ -36,8 +36,8 @@ export async function getAndConsumeChallenge(key: string): Promise<string | null
   let challengeDoc;
   try {
     challengeDoc = await serverAdmin.databases.getDocument(DB_ID, CHALLENGE_COLLECTION_ID, key);
-  } catch (e: any) {
-    if (e.code === 404) {
+  } catch (e: unknown) {
+    if (typeof e === 'object' && e !== null && 'code' in e && (e as { code: unknown }).code === 404) {
       return null; // Not found
     }
     throw e;

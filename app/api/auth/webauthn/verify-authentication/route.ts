@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyAuthenticationResponse } from '@simplewebauthn/server';
-import type { AuthenticationResponseJSON, VerifiedAuthenticationResponse } from '@simplewebauthn/server';
+import type { AuthenticationResponseJSON, VerifiedAuthenticationResponse, AuthenticatorTransport } from '@simplewebauthn/server';
 import { getAndConsumeChallenge } from '@/lib/auth/challenge';
 import { serverAdmin } from '@/lib/appwrite/server-admin';
 
@@ -27,9 +27,15 @@ export async function POST(req: Request) {
     }
 
     const user = await serverAdmin.users.get(userId);
-    const userCredentials = user.prefs.credentials || [];
+    const userCredentials = (user.prefs.credentials || []) as {
+      id: string;
+      publicKey: string;
+      counter: number;
+      transports: AuthenticatorTransport[];
+      encryptedMnemonic?: string;
+    }[];
 
-    const credential = userCredentials.find((c: any) => c.id === body.id);
+    const credential = userCredentials.find((c) => c.id === body.id);
     if (!credential) {
       return NextResponse.json({ error: 'Credential not found for this user.' }, { status: 404 });
     }
@@ -43,10 +49,9 @@ export async function POST(req: Request) {
         credentialID: Buffer.from(credential.id, 'base64url'),
         credentialPublicKey: Buffer.from(credential.publicKey, 'base64url'),
         counter: credential.counter,
-        transports: credential.transports,
       },
-      requireUserVerification: true,
-    });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
 
     const { verified, authenticationInfo } = verification;
 
@@ -56,18 +61,21 @@ export async function POST(req: Request) {
 
     // Update the credential counter to prevent cloning
     const { newCounter } = authenticationInfo;
-    const updatedCredentials = userCredentials.map((c: any) =>
+    const updatedCredentials = userCredentials.map((c) =>
       c.id === body.id ? { ...c, counter: newCounter } : c
     );
     await serverAdmin.users.updatePrefs(userId, { ...user.prefs, credentials: updatedCredentials });
 
-    // Create a session token
-    const token = await serverAdmin.users.createToken(userId);
-    return NextResponse.json({ token: token.secret });
+    // Return the encrypted mnemonic associated with this credential
+    if (!credential.encryptedMnemonic) {
+      return NextResponse.json({ error: 'No encrypted data found for this credential.' }, { status: 404 });
+    }
 
-  } catch (e: any) {
+    return NextResponse.json({ encryptedMnemonic: credential.encryptedMnemonic });
+
+  } catch (e: unknown) {
     console.error('Error verifying authentication:', e);
-    const message = e.message || 'An unknown error occurred.';
+    const message = e instanceof Error ? e.message : 'An unknown error occurred.';
     return NextResponse.json({ error: `Verification failed: ${message}` }, { status: 500 });
   }
 }
