@@ -13,7 +13,8 @@ export interface WalletData {
   network: string;
   balance?: string;
   balanceUSD?: number;
-  privateKey?: string;
+  privateKey: string; // Make this required
+  mnemonic?: string; // Mnemonic is sensitive, should be optional and handled with care
 }
 
 // --- Provider Configuration ---

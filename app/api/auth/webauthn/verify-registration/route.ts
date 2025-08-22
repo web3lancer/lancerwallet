@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
 import { verifyRegistrationResponse } from '@simplewebauthn/server';
-import type { VerifiedRegistrationResponse, RegistrationResponseJSON } from '@simplewebauthn/server';
+import type { VerifiedRegistrationResponse, RegistrationResponseJSON, AuthenticatorTransport } from '@simplewebauthn/server';
 import { AppwriteServerClient } from '@/lib/appwrite/server';
-import { ID } from 'node-appwrite';
 
 const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
 const origin = process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000';
 
 export async function POST(req: Request) {
-  const body: RegistrationResponseJSON & { userId: string } = await req.json();
-  const { userId } = body;
+  const body: RegistrationResponseJSON & { userId: string; encryptedMnemonic: string } = await req.json();
+  const { userId, encryptedMnemonic } = body;
 
-  if (!userId) {
-    return NextResponse.json({ error: 'userId is required.' }, { status: 400 });
+  if (!userId || !encryptedMnemonic) {
+    return NextResponse.json({ error: 'userId and encryptedMnemonic are required.' }, { status: 400 });
   }
 
   const { users } = new AppwriteServerClient();
@@ -23,11 +22,11 @@ export async function POST(req: Request) {
   try {
     user = await users.get(userId);
     expectedChallenge = user.prefs.currentChallenge;
-  } catch (e: any) {
+  } catch (e: unknown) {
     // A user might not exist yet if this is their first passkey registration.
     // However, the challenge should have been set in a temporary record or cache.
     // In our case, we upsert prefs, so a user object should exist if options were generated.
-    if (e.code === 404) {
+    if (typeof e === 'object' && e !== null && 'code' in e && (e as { code: unknown }).code === 404) {
       return NextResponse.json({ error: 'User not found or challenge expired.' }, { status: 404 });
     }
     console.error('Appwrite error fetching user or challenge', e);
@@ -55,14 +54,22 @@ export async function POST(req: Request) {
   const { verified, registrationInfo } = verification;
 
   if (verified && registrationInfo) {
-    const { credentialPublicKey, credentialID, counter } = registrationInfo;
+    const { credential } = registrationInfo;
+    const { id, publicKey, counter } = credential;
     const existingCredentials = user.prefs.credentials || [];
 
-    const newCredential = {
-      id: Buffer.from(credentialID).toString('base64url'),
-      publicKey: Buffer.from(credentialPublicKey).toString('base64url'),
-      counter,
-      transports: body.response.transports,
+    const newCredential: {
+      id: string;
+      publicKey: Uint8Array;
+      counter: number;
+      transports: AuthenticatorTransport[];
+      encryptedMnemonic?: string;
+    } = {
+      id: id,
+      publicKey: publicKey,
+      counter: counter,
+      transports: body.response.transports || [],
+      encryptedMnemonic: encryptedMnemonic,
     };
 
     try {
@@ -70,8 +77,8 @@ export async function POST(req: Request) {
       let finalUser;
       try {
         finalUser = await users.get(userId);
-      } catch (e: any) {
-        if (e.code === 404) {
+      } catch (e: unknown) {
+        if (typeof e === 'object' && e !== null && 'code' in e && (e as { code: unknown }).code === 404) {
           finalUser = await users.create(userId, undefined, undefined, undefined, userId.split(':')[1]);
         } else {
           throw e;
@@ -79,6 +86,7 @@ export async function POST(req: Request) {
       }
 
       await users.updatePrefs(finalUser.$id, {
+        ...user.prefs,
         credentials: [...existingCredentials, newCredential],
         currentChallenge: null, // Clear the challenge
       });
@@ -87,7 +95,7 @@ export async function POST(req: Request) {
       const token = await users.createToken(finalUser.$id);
       return NextResponse.json({ token: token.secret });
 
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Appwrite error saving credential or creating token', e);
       return NextResponse.json({ error: 'Error saving credential.' }, { status: 500 });
     }

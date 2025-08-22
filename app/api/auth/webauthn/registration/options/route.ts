@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { generateRegistrationOptions } from '@simplewebauthn/server';
+import type { AuthenticatorTransport } from '@simplewebauthn/server';
 import { AppwriteServerClient } from '@/lib/appwrite/server';
 
 const rpName = process.env.WEBAUTHN_RP_NAME || 'LancerWallet';
 const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
-const origin = process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000';
 
 export async function POST(req: Request) {
   const { userId, userName } = await req.json();
@@ -17,8 +17,8 @@ export async function POST(req: Request) {
   let user;
   try {
     user = await users.get(userId);
-  } catch (e: any) {
-    if (e.code !== 404) {
+  } catch (e: unknown) {
+    if (typeof e === 'object' && e !== null && 'code' in e && (e as { code: unknown }).code !== 404) {
       return NextResponse.json({ error: 'Error finding user' }, { status: 500 });
     }
     // User not found, which is expected for a new registration.
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     userID: userId,
     userName: userName,
     attestationType: 'none',
-    excludeCredentials: existingCredentials.map((cred: any) => ({
+    excludeCredentials: existingCredentials.map((cred: { id: string; transports: AuthenticatorTransport[] }) => ({
       id: cred.id,
       type: 'public-key',
       transports: cred.transports,
@@ -40,6 +40,9 @@ export async function POST(req: Request) {
     authenticatorSelection: {
       userVerification: 'preferred',
       residentKey: 'required',
+    },
+    extensions: {
+      credProps: true,
     },
   });
 

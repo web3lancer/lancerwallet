@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
+import type { AuthenticationExtensionsClientInputs } from '@simplewebauthn/server';
 import { createChallenge } from '@/lib/auth/challenge';
 
 const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
 
+interface AuthenticationExtensionsClientInputsWithPRF extends AuthenticationExtensionsClientInputs {
+  prf?: unknown;
+}
+
 export async function GET() {
   try {
+    const extensions: AuthenticationExtensionsClientInputsWithPRF = {
+      prf: {},
+    };
+
     const options = await generateAuthenticationOptions({
       rpID,
       userVerification: 'preferred',
+      extensions,
     });
 
     // Store the challenge for the verification step

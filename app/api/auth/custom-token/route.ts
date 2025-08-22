@@ -1,107 +1,81 @@
-import { NextResponse } from "next/server";
-import { recoverAddress } from "../../../../lib/appwrite/web3";
-import { verifyAndConsumeNonceFromDB } from "@/lib/auth/nonce";
-import { AppwriteSDK } from "@/lib/appwrite";
+import { NextResponse } from 'next/server';
+import { recoverAddress } from '@/lib/wallet';
+import { serverAdmin } from '@/lib/appwrite/server-admin';
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { method, address, signature, key, nonce } = body;
-  
-  if (!method || !address) {
-    return NextResponse.json({ error: "missing required fields" }, { status: 400 });
-  }
-
-  let userId: string;
-  let userData: Record<string, string> = {};
-
-  if (method === 'wallet') {
-    // Wallet authentication flow
-    if (!signature || !nonce || !key) {
-      return NextResponse.json({ error: "missing wallet auth fields" }, { status: 400 });
-    }
-
-    const message = `Sign this nonce: ${nonce}`;
-    let recovered: string;
-    try {
-      recovered = recoverAddress(message, signature);
-    } catch {
-      return NextResponse.json({ error: "invalid signature" }, { status: 400 });
-    }
-
-    if (recovered.toLowerCase() !== address.toLowerCase()) {
-      return NextResponse.json(
-        { error: "signature does not match address" },
-        { status: 400 }
-      );
-    }
-
-    const ok = await verifyAndConsumeNonceFromDB(key, nonce);
-    if (!ok) {
-      return NextResponse.json(
-        { error: "invalid or expired nonce" },
-        { status: 400 }
-      );
-    }
-
-    userId = `wallet:${address.toLowerCase()}`;
-    userData = {
-      name: address.toLowerCase(),
-      provider: 'wallet',
-      address: address.toLowerCase(),
-    };
-
-  } else if (method === 'passkey') {
-    // Passkey authentication flow - to be implemented
-    return NextResponse.json({ error: "passkey auth not yet implemented" }, { status: 400 });
-    
-  } else {
-    return NextResponse.json({ error: "unsupported auth method" }, { status: 400 });
-  }
-
   try {
-    const { adminClient } = AppwriteSDK;
-    const nodeAppwrite = await import("node-appwrite");
-    const NodeClient = nodeAppwrite.Client;
-    const Users = nodeAppwrite.Users;
-    
-    const nodeClient = new NodeClient()
-      .setEndpoint(adminClient.config.endpoint)
-      .setProject(adminClient.config.project)
-      .setKey(process.env.APPWRITE_API_KEY || process.env.APPWRITE_KEY || adminClient.config.devkey);
-    
-    const users = new Users(nodeClient);
+    const { address, signature, nonce } = await req.json();
 
-    // Try to get user by deterministic ID first
+    if (!address || !signature || !nonce) {
+      return NextResponse.json(
+        { error: 'Missing required fields: address, signature, and nonce are required.' },
+        { status: 400 }
+      );
+    }
+
+    // Verify and consume the nonce
+    const { verifyAndConsumeNonceMessage } = await import('@/lib/auth/nonce-manager');
+    const isNonceValid = await verifyAndConsumeNonceMessage(nonce);
+    if (!isNonceValid) {
+      return NextResponse.json({ error: 'Invalid or expired nonce.' }, { status: 401 });
+    }
+
+    // 1. Verify signature
+    let recoveredAddress: string;
+    try {
+      recoveredAddress = recoverAddress(nonce, signature);
+    } catch (error) {
+      console.error('Signature recovery error:', error);
+      return NextResponse.json({ error: 'Invalid signature format.' }, { status: 400 });
+    }
+
+    if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+      return NextResponse.json(
+        { error: 'Signature does not match address.' },
+        { status: 401 }
+      );
+    }
+
+    // 2. Determine user ID
+    const userId = `wallet:${address.toLowerCase()}`;
+    const userName = address.toLowerCase();
+
+    // 3. Create or retrieve Appwrite user
     let user;
     try {
-      user = await users.get(userId);
-    } catch (_e) {
-      // If not found, create the user with deterministic id
-      user = await users.create(
-        userId,
-        undefined, // email
-        undefined, // phone  
-        undefined, // password
-        userData.name
-      );
-      
-      // Set user preferences to store metadata
-      try {
-        await users.updatePrefs(userId, userData);
-      } catch (prefError) {
-        console.warn("Failed to set user preferences:", prefError);
+      user = await serverAdmin.users.get(userId);
+    } catch (e: unknown) {
+      // Check if it's an AppwriteException
+      if (typeof e === 'object' && e !== null && 'code' in e && (e as { code: unknown }).code === 404) {
+        // User not found, create a new one
+        try {
+          user = await serverAdmin.users.create(
+            userId,
+            undefined, // email
+            undefined, // phone
+            undefined, // password
+            userName
+          );
+        } catch (creationError) {
+          console.error('Appwrite user creation error:', creationError);
+          return NextResponse.json({ error: 'Failed to create user.' }, { status: 500 });
+        }
+      } else {
+        // Different error, e.g., network issue or Appwrite server problem
+        console.error('Appwrite user fetch error:', e);
+        return NextResponse.json({ error: 'An error occurred while fetching user information.' }, { status: 500 });
       }
     }
 
-    // Create a custom token for the user
-    const token = await users.createToken(user.$id, 60 * 60, 6); // 1 hour expiry
+    // 4. Issue custom token
+    const token = await serverAdmin.users.createToken(user.$id);
 
+    // 5. Return token secret
     return NextResponse.json({ token: token.secret });
-  } catch (error) {
-    console.error("Error during Appwrite user creation/session:", error);
-    return NextResponse.json(
-      { error: "failed to create session" },
-      { status: 500 }
-    );
+
+  } catch (error: unknown) {
+    console.error('Custom token endpoint error:', error);
+    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return NextResponse.json({ error: 'An unexpected error occurred.', details: message }, { status: 500 });
   }
 }
