@@ -1,195 +1,231 @@
-# LancerWallet: Streamlined Authentication Plan
+# LancerWallet: Custom Auth with Wallet-Centric Identity
 
-## Problem with Current Implementation
+## Core Architecture: Wallet IS Identity + Passkey Backup
 
-The existing flow is completely broken:
-1. User creates account/wallet 
-2. App immediately asks to "unlock wallet" 
-3. User is confused - they JUST created the credentials
-4. Multiple confusing authentication steps that make no sense
+**Primary Identity**: Crypto wallet (derived from seed phrase)
+**Backup Access**: Passkey (generates & securely encapsulates wallet)
+**Authentication**: 100% Appwrite Custom Auth (zero built-in email/password)
 
-## Core Principle: Direct Authentication via Credential Choice
+## Identity Model
 
-Users should authenticate directly with their preferred credential method. No "wallet unlocking" nonsense after account creation.
-
-## New Authentication Flow
-
-### Single Landing Page: Three Clear Options
-
-**URL: `/auth`**
-
-The user sees exactly three options:
-1. **Continue with Passkey** (biometric/hardware key)
-2. **Continue with Phrase** (seed phrase authentication) 
-3. **Continue with Password** (traditional password)
-
-### Option 1: Continue with Passkey
-
-**Flow:**
+### Wallet as Primary Identity
 ```
-/auth → Click "Continue with Passkey" → Browser biometric prompt → Authenticated → /home
+Seed Phrase → Private Key → Wallet Address → User ID: `wallet:${address}`
 ```
 
-**Implementation:**
-- Use WebAuthn API for biometric/hardware key authentication
-- Store credential in Appwrite user preferences
-- Create session directly after successful authentication
-- No wallet "unlocking" - passkey IS the authentication
+- Wallet address is the deterministic user identity
+- All user data tied to wallet address
+- Seed phrase ownership = account ownership
+- Cryptographic signature proves identity
 
-**Files to modify:**
-- `app/auth/page.tsx` - Add passkey authentication button
-- `lib/auth/passkey.ts` - WebAuthn implementation
-- `app/api/auth/passkey/route.ts` - Server-side verification
-
-### Option 2: Continue with Phrase
-
-**Flow:**
+### Passkey as Secure Wallet Proxy
 ```
-/auth → Click "Continue with Phrase" → Enter 12/24 word phrase → Authenticated → /home
+Passkey Registration → Generate Wallet → Encrypt with Passkey → Store Encrypted Wallet
+Passkey Auth → Decrypt Wallet → Sign with Wallet → Same User ID: `wallet:${address}`
 ```
 
-**Implementation:**
-- User enters seed phrase directly on auth page
-- Derive wallet address from phrase
-- Sign nonce challenge to prove ownership
-- Create session with wallet address as identity
-- No separate "wallet creation" step
+- Passkey generates a wallet behind the scenes
+- Wallet is encrypted and stored securely
+- Passkey authentication decrypts the wallet
+- Same wallet address = same user identity
+- Drop-in replacement when user forgets phrase
 
-**Files to modify:**
-- `app/auth/page.tsx` - Add phrase input form
-- `lib/wallet.ts` - Direct phrase-to-auth functions
-- `app/api/auth/phrase/route.ts` - Nonce challenge & verification
+## Two Authentication Methods, One Identity System
 
-### Option 3: Continue with Password
-
-**Flow:**
+### Method 1: Direct Wallet Authentication
+**User Flow:**
 ```
-/auth → Click "Continue with Password" → Email/Password form → Authenticated → /home
+/auth → "Continue with Seed Phrase" → Enter 12/24 words → Derive wallet → Sign nonce → Authenticated
 ```
 
-**Implementation:**
-- Traditional email/password authentication
-- Use Appwrite's built-in auth
-- Create session directly
-- Optional: Allow linking wallet later in settings
+**Technical Flow:**
+1. User enters seed phrase
+2. Derive wallet address from phrase
+3. Generate nonce challenge
+4. Sign nonce with wallet private key
+5. Send `{ address, signature, nonce }` to custom auth endpoint
+6. Server verifies signature matches address
+7. Create Appwrite user with ID: `wallet:${address.toLowerCase()}`
+8. Issue custom token via `users.createToken()`
+9. Create session with custom token
 
-**Files to modify:**
-- `app/auth/page.tsx` - Add email/password form
-- Use existing Appwrite auth actions
-
-## Account Creation vs Authentication
-
-### New Users (Account Creation)
-
-**Passkey Users:**
+### Method 2: Passkey Authentication (Wallet Proxy)
+**User Flow:**
 ```
-/auth → "Continue with Passkey" → "Create new passkey account" → Register passkey → /home
+/auth → "Continue with Passkey" → Biometric prompt → Decrypt wallet → Sign nonce → Authenticated
 ```
 
-**Phrase Users:**
+**Technical Flow:**
+1. User triggers passkey authentication
+2. WebAuthn authenticates the passkey
+3. Passkey decrypts the stored encrypted wallet
+4. Generate nonce challenge
+5. Sign nonce with decrypted wallet private key
+6. Send `{ address, signature, nonce, authMethod: 'passkey' }` to custom auth endpoint
+7. Server verifies signature matches address (same as wallet auth)
+8. Same user ID: `wallet:${address.toLowerCase()}`
+9. Same session creation flow
+
+## Custom Auth Endpoint Design
+
+### Single Endpoint: `/api/auth/custom-token/route.ts`
+
+```typescript
+POST /api/auth/custom-token
+{
+  address: "0x742d35Cc...",
+  signature: "0x...",
+  nonce: "challenge123",
+  authMethod: "phrase" | "passkey"
+}
+
+Response:
+{
+  token: "abc123" // 6-char secret for createSession()
+}
 ```
-/auth → "Continue with Phrase" → "Create new wallet" → Generate phrase → Show phrase → Verify phrase → /home
+
+**Server Logic:**
+1. Verify signature matches address (same for both methods)
+2. Validate and consume nonce
+3. Determine user ID: `wallet:${address.toLowerCase()}`
+4. Create or retrieve Appwrite user
+5. Issue custom token
+6. Return token secret
+
+**Key Point**: Server doesn't care if wallet came from phrase or passkey - signature verification is identical.
+
+## Avoiding Auth Method Conflicts
+
+### No Method Confusion
+- **Single identity source**: Wallet address
+- **Single verification**: Cryptographic signature
+- **Single user ID format**: `wallet:${address}`
+- **Single custom auth endpoint**: Handles both methods uniformly
+
+### Passkey Wallet Generation Strategy
+```typescript
+// When user first registers with passkey:
+1. Generate new random wallet
+2. Encrypt wallet with passkey credential
+3. Store encrypted wallet in Appwrite user prefs
+4. User identity = wallet address (not passkey ID)
+
+// When user authenticates with passkey:
+1. WebAuthn authenticates passkey
+2. Decrypt stored wallet using passkey
+3. Sign nonce with decrypted wallet
+4. Authenticate as wallet address
 ```
 
-**Password Users:**
+### Phrase vs Passkey Distinction
+- **Phrase users**: Own their seed phrase, can recover anywhere
+- **Passkey users**: Passkey securely manages wallet, tied to device/browser
+- **Same result**: Both authenticate as wallet address
+- **No conflict**: Server treats both identically
+
+## Simplified Auth Page: Two Options Only
+
+### `/auth` Page Design
 ```
-/auth → "Continue with Password" → "Create account" → Email/Password signup → /home
+┌─────────────────────────────────┐
+│         LancerWallet            │
+├─────────────────────────────────┤
+│                                 │
+│  🔑 Continue with Seed Phrase   │
+│  Enter your 12/24 word phrase   │
+│                                 │
+├─────────────────────────────────┤
+│                                 │
+│  👆 Continue with Passkey       │
+│  Use biometric authentication   │
+│                                 │
+└─────────────────────────────────┘
 ```
 
-### Returning Users (Authentication)
+## Implementation Plan
 
-**All credential types use the same buttons, system auto-detects:**
-- Passkey: Browser prompts for existing credential
-- Phrase: Validates existing wallet
-- Password: Validates existing account
+### Phase 1: Custom Auth Foundation
+1. **Build unified custom auth endpoint**
+   - File: `app/api/auth/custom-token/route.ts`
+   - Handles both phrase and passkey authentication
+   - Single signature verification logic
+   - Deterministic user ID creation
 
-## Key Changes to Fix UX
+2. **Update auth page**
+   - File: `app/auth/page.tsx`
+   - Two buttons only: Phrase & Passkey
+   - Remove all traditional auth forms
 
-### 1. Eliminate "Wallet Unlocking" Concept
+### Phase 2: Phrase Authentication
+1. **Direct phrase input**
+   - User enters seed phrase on auth page
+   - Derive wallet address immediately
+   - Sign nonce challenge
+   - Call custom auth endpoint
 
-**REMOVE:**
-- Any "unlock wallet" prompts after account creation
-- Separate wallet creation flows that don't lead to authentication
-- Confusing multi-step processes
+2. **Remove onboarding complexity**
+   - No separate wallet creation flow
+   - No "save phrase" → "verify phrase" steps
+   - Direct phrase → authenticated
 
-**REPLACE WITH:**
-- Direct authentication via chosen credential
-- Immediate session creation after successful auth
-- Single-step account creation + authentication
+### Phase 3: Passkey Wallet Proxy
+1. **Passkey registration**
+   - Generate wallet when user first registers with passkey
+   - Encrypt wallet with passkey credential
+   - Store in Appwrite user preferences
 
-### 2. Consolidate Authentication Entry Points
+2. **Passkey authentication**
+   - WebAuthn authenticates passkey
+   - Decrypt stored wallet
+   - Sign nonce with wallet
+   - Same custom auth endpoint
 
-**REMOVE:**
-- Multiple authentication pages
-- Onboarding flows that don't authenticate
-- Wallet management separate from authentication
+### Phase 4: Clean Legacy Code
+1. **Remove Appwrite built-in auth**
+   - No email/password flows
+   - No traditional user creation
+   - 100% custom auth only
 
-**REPLACE WITH:**
-- Single `/auth` page with three clear options
-- Each option handles both new users and returning users
-- Immediate redirect to `/home` after authentication
+2. **Remove wallet unlocking**
+   - No unlock prompts after auth
+   - No separate wallet management state
 
-### 3. Simplify State Management
-
-**REMOVE:**
-- Complex wallet unlocking state
-- Multiple authentication states
-- Confusing "wallet loaded but not authenticated" states
-
-**REPLACE WITH:**
-- Binary authentication state: authenticated or not
-- Session-based authentication (HTTP-only cookies)
-- Clear user identity (passkey ID, wallet address, or email)
-
-## Implementation Priority
-
-### Phase 1: Fix Core Auth Page
-1. Replace current auth forms with three-button layout
-2. Implement phrase authentication (simplest)
-3. Test end-to-end flow: phrase → authenticated → /home
-
-### Phase 2: Add Passkey Support
-1. Implement WebAuthn registration/authentication
-2. Add passkey option to auth page
-3. Test biometric authentication flow
-
-### Phase 3: Clean Up Legacy Code
-1. Remove broken wallet unlocking flows
-2. Remove confusing onboarding pages
-3. Consolidate authentication logic
-
-## New File Structure
+## File Structure
 
 ```
 app/auth/
-  page.tsx                 # Single auth page with 3 options
-  actions.ts              # All auth actions (phrase, passkey, password)
+  page.tsx                 # Two options: Phrase & Passkey
+  actions.ts               # Custom auth actions only
 
 lib/auth/
-  phrase.ts               # Phrase-based authentication
-  passkey.ts              # WebAuthn implementation
-  session.ts              # Session management
+  phrase.ts                # Phrase → wallet → signature
+  passkey.ts               # Passkey → decrypt wallet → signature
+  custom-auth.ts           # Shared signature verification
 
 app/api/auth/
-  phrase/route.ts         # Phrase auth endpoint
-  passkey/route.ts        # Passkey auth endpoint
-  session/route.ts        # Session validation
+  custom-token/route.ts    # Single endpoint for both methods
+  nonce/route.ts           # Nonce generation
 ```
 
-## Success Criteria
+## Security Benefits
 
-1. **User creates account:** One-click process that ends with authentication
-2. **User returns:** Same three buttons, immediate authentication 
-3. **No confusion:** Zero "unlock wallet" prompts after account creation
-4. **Clear path:** Each credential type has obvious, separate flow
-5. **Instant access:** Authentication immediately leads to `/home`
+1. **Unified verification**: Both methods use cryptographic signatures
+2. **No auth confusion**: Single identity model (wallet address)
+3. **Secure passkey backup**: Passkey encrypts wallet, doesn't replace it
+4. **Self-sovereign**: Users always own wallet (phrase or passkey-encrypted)
+5. **Custom auth only**: Zero dependency on Appwrite built-in auth
 
-## What Gets Removed
+## User Experience
 
-- `app/onboarding/` - Replace with direct auth flows
-- Wallet unlocking state management
-- Complex multi-step authentication flows
-- Confusing "wallet loaded but not authenticated" states
-- Any prompt to "unlock" immediately after account creation
+**New Users:**
+- Choose phrase (self-custody) or passkey (device-managed)
+- Single step: authenticate and you're in
+- No unlock prompts, no confusion
 
-This plan eliminates the broken UX and provides three clear, separate authentication paths that users understand.
+**Returning Users:**
+- Same two buttons
+- Same authentication flow
+- Immediate access to wallet
+
+This design eliminates all authentication confusion while maintaining wallet-centric identity and providing passkey as a secure, drop-in alternative to seed phrases.
