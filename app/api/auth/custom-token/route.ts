@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   }
 
   let userId: string;
-  let userData: any = {};
+  let userData: Record<string, string> = {};
 
   if (method === 'wallet') {
     // Wallet authentication flow
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     let user;
     try {
       user = await users.get(userId);
-    } catch (e) {
+    } catch (_e) {
       // If not found, create the user with deterministic id
       user = await users.create(
         userId,

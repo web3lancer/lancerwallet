@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   const existingCredentials = user?.prefs?.credentials || [];
 
-  const options = generateRegistrationOptions({
+  const options = await generateRegistrationOptions({
     rpName,
     rpID,
     userID: userId,

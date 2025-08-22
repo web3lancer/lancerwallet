@@ -11,6 +11,9 @@ export interface WalletData {
   address: string;
   name: string;
   network: string;
+  balance?: string;
+  balanceUSD?: number;
+  privateKey?: string;
 }
 
 // --- Provider Configuration ---
@@ -43,7 +46,12 @@ export function generateMnemonic(): string {
  * @returns True if the mnemonic is valid, false otherwise.
  */
 export function validateMnemonic(mnemonic: string): boolean {
-  return ethers.Mnemonic.isValid(mnemonic);
+  try {
+    ethers.Mnemonic.fromPhrase(mnemonic);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -138,4 +146,89 @@ export async function sendTransaction(
     console.error("Failed to send transaction:", e);
     throw new Error('Failed to send transaction');
   }
+}
+
+// --- Wallet Storage & Management ---
+
+/**
+ * Creates a WalletData object from a mnemonic phrase
+ * @param mnemonic The mnemonic phrase
+ * @param network The network (default: ethereum)
+ * @returns WalletData object
+ */
+export async function createWalletFromMnemonic(
+  mnemonic: string, 
+  network: string = 'ethereum'
+): Promise<WalletData> {
+  if (!validateMnemonic(mnemonic)) {
+    throw new Error('Invalid mnemonic phrase.');
+  }
+  
+  const wallet = ethers.Wallet.fromPhrase(mnemonic);
+  return {
+    address: wallet.address,
+    name: `Wallet ${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`,
+    network: network
+  };
+}
+
+/**
+ * Saves a wallet to localStorage
+ * @param wallet The wallet data to save
+ */
+export function saveWalletToLocal(wallet: WalletData): void {
+  try {
+    const existingWallets = getWalletsFromLocal();
+    const updatedWallets = [...existingWallets, wallet];
+    localStorage.setItem('wallets', JSON.stringify(updatedWallets));
+  } catch (error) {
+    console.error('Failed to save wallet to localStorage:', error);
+    throw new Error('Failed to save wallet locally');
+  }
+}
+
+/**
+ * Gets wallets from localStorage
+ * @returns Array of WalletData
+ */
+export function getWalletsFromLocal(): WalletData[] {
+  try {
+    if (typeof window === 'undefined') return [];
+    const walletsJson = localStorage.getItem('wallets');
+    if (!walletsJson) return [];
+    return JSON.parse(walletsJson) as WalletData[];
+  } catch (error) {
+    console.error('Failed to get wallets from localStorage:', error);
+    return [];
+  }
+}
+
+/**
+ * Gets decrypted wallets from Appwrite (placeholder implementation)
+ * @param _password The decryption password (unused in current implementation)
+ * @param userId The user ID
+ * @returns Array of WalletData
+ */
+export async function getDecryptedWallets(
+  _password: string, 
+  userId: string
+): Promise<WalletData[]> {
+  // TODO: Implement Appwrite integration for encrypted wallet storage
+  console.log('getDecryptedWallets called with userId:', userId);
+  return [];
+}
+
+/**
+ * Saves encrypted wallet to Appwrite (placeholder implementation)
+ * @param wallet The wallet to save
+ * @param _password The encryption password (unused in current implementation)
+ * @param userId The user ID
+ */
+export async function saveEncryptedWallet(
+  wallet: WalletData, 
+  _password: string, 
+  userId: string
+): Promise<void> {
+  // TODO: Implement Appwrite integration for encrypted wallet storage
+  console.log('saveEncryptedWallet called for wallet:', wallet.address, 'userId:', userId);
 }

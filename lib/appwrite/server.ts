@@ -3,15 +3,32 @@ import {
   Client,
   Databases,
 } from 'appwrite';
+import { Client as NodeClient, Users } from 'node-appwrite';
 import { cookies } from 'next/headers';
 
 // Environment variables
 const appwriteEndpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
 const appwriteProjectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
 const appwriteDatabaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+const appwriteApiKey = process.env.APPWRITE_API_KEY!;
 
 if (!appwriteEndpoint || !appwriteProjectId || !appwriteDatabaseId) {
   throw new Error('Appwrite environment variables are not set. Please check your .env.local file.');
+}
+
+// Server-side client with API key for admin operations
+export class AppwriteServerClient {
+  private client: NodeClient;
+  public users: Users;
+
+  constructor() {
+    this.client = new NodeClient()
+      .setEndpoint(appwriteEndpoint)
+      .setProject(appwriteProjectId)
+      .setKey(appwriteApiKey);
+    
+    this.users = new Users(this.client);
+  }
 }
 
 // Function to get a client with an active user session

@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     let user;
     try {
       user = await users.get(deterministicId);
-    } catch (e) {
+    } catch (_e) {
       // If not found, create the user with deterministic id and set name to the address
       user = await users.create(deterministicId, undefined, undefined, undefined, normalized);
     }

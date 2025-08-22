@@ -49,12 +49,13 @@ export async function POST(req: Request) {
     const token = await serverAdmin.users.createToken(userId);
     const session = await appwriteAccount.createSession(userId, token.secret);
 
-    cookies().set('appwrite-session', session.secret, {
+    const cookieStore = await cookies();
+    cookieStore.set('appwrite-session', session.secret, {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      expires: new Date(session.expire),
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
     });
 
     return NextResponse.json({ success: true, userId });

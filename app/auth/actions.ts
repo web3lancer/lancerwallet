@@ -86,7 +86,8 @@ export async function walletAuth({ method, password, seedPhrase }: WalletAuthPar
     const token = await serverAdmin.users.createToken(user.$id);
     const session = await appwriteAccount.createSession(user.$id, token.secret);
     
-    cookies().set('appwrite-session', session.secret, {
+    const cookieStore = await cookies();
+    cookieStore.set('appwrite-session', session.secret, {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -114,7 +115,8 @@ export async function logout() {
   } catch (_error: unknown) {
     // We can ignore the error, as we are deleting the cookie anyway
   } finally {
-    cookies().delete('appwrite-session');
+    const cookieStore = await cookies();
+    cookieStore.delete('appwrite-session');
     redirect('/auth');
   }
 }
