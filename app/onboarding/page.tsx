@@ -1,9 +1,11 @@
 "use client";
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Logo from '../components/Logo';
 import { generateMnemonic, validateMnemonic, createWalletFromMnemonic, saveWalletToLocal } from '../../lib/wallet';
 import { encryptWithPassphrase } from '../../lib/crypto';
+import Input from '../components/ui/Input';
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
@@ -13,9 +15,22 @@ export default function Onboarding() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Create flow passphrase state
+  const [createPassphrase, setCreatePassphrase] = useState('');
+  const [createPassphraseConfirm, setCreatePassphraseConfirm] = useState('');
+  const [createPassError, setCreatePassError] = useState<string | null>(null);
+
+  // Restore flow passphrase state
+  const [restorePassphrase, setRestorePassphrase] = useState('');
+  const [restorePassphraseConfirm, setRestorePassphraseConfirm] = useState('');
+  const [restorePassError, setRestorePassError] = useState<string | null>(null);
+
   const startCreate = async () => {
     setIsLoading(true);
     setError(null);
+    setCreatePassphrase('');
+    setCreatePassphraseConfirm('');
+    setCreatePassError(null);
     try {
       const newMnemonic = generateMnemonic();
       setMnemonic(newMnemonic);
@@ -41,19 +56,25 @@ export default function Onboarding() {
   const complete = async () => {
     setIsLoading(true);
     setError(null);
+    setCreatePassError(null);
     try {
+      if (createPassphrase.length < 8) {
+        setCreatePassError('Passphrase must be at least 8 characters.');
+        return;
+      }
+      if (createPassphrase !== createPassphraseConfirm) {
+        setCreatePassError('Passphrases do not match.');
+        return;
+      }
+
       const wallet = await createWalletFromMnemonic(mnemonic);
       // Save wallet locally (auth is optional)
       saveWalletToLocal(wallet);
-      
-      // Save mnemonic to localStorage for this session
-      const passphrase = window.prompt('Set a passphrase to encrypt your seed (min 8 chars):') || '';
-      if (passphrase.length < 8) {
-        throw new Error('Passphrase must be at least 8 characters.');
-      }
-      const enc = encryptWithPassphrase({ mnemonic }, passphrase);
+
+      // Encrypt and save mnemonic.enc to localStorage
+      const enc = encryptWithPassphrase({ mnemonic }, createPassphrase);
       localStorage.setItem('mnemonic.enc', enc);
-      
+
       setRestoredAddress(wallet.address);
       setStep(4);
     } catch (error) {
@@ -67,6 +88,10 @@ export default function Onboarding() {
   const startRestore = () => {
     setStep(10);
     setError(null);
+    setInputMnemonic('');
+    setRestorePassphrase('');
+    setRestorePassphraseConfirm('');
+    setRestorePassError(null);
   };
 
   const restore = async () => {
@@ -77,23 +102,29 @@ export default function Onboarding() {
 
     setIsLoading(true);
     setError(null);
+    setRestorePassError(null);
     try {
       if (!validateMnemonic(inputMnemonic)) {
         throw new Error("Invalid mnemonic");
       }
-      
+
+      if (restorePassphrase.length < 8) {
+        setRestorePassError('Passphrase must be at least 8 characters.');
+        return;
+      }
+      if (restorePassphrase !== restorePassphraseConfirm) {
+        setRestorePassError('Passphrases do not match.');
+        return;
+      }
+
       const wallet = await createWalletFromMnemonic(inputMnemonic);
       // Save wallet locally (auth is optional)
       saveWalletToLocal(wallet);
-      
-      // Save mnemonic to localStorage for this session
-      const passphrase = window.prompt('Enter a passphrase to encrypt your seed (min 8 chars):') || '';
-      if (passphrase.length < 8) {
-        throw new Error('Passphrase must be at least 8 characters.');
-      }
-      const enc = encryptWithPassphrase({ mnemonic: inputMnemonic }, passphrase);
+
+      // Encrypt and save mnemonic.enc to localStorage
+      const enc = encryptWithPassphrase({ mnemonic: inputMnemonic }, restorePassphrase);
       localStorage.setItem('mnemonic.enc', enc);
-      
+
       setRestoredAddress(wallet.address);
       setStep(11);
     } catch (err) {
@@ -125,6 +156,9 @@ export default function Onboarding() {
       default: return '';
     }
   };
+
+  const isCreatePassValid = createPassphrase.length >= 8 && createPassphrase === createPassphraseConfirm;
+  const isRestorePassValid = restorePassphrase.length >= 8 && restorePassphrase === restorePassphraseConfirm;
 
   return (
     <main 
@@ -246,7 +280,7 @@ export default function Onboarding() {
     disabled={isLoading}
     style={{ minWidth: '160px' }}
   >
-    {isLoading ? '⏳ Creating...' : '🆕 Create New Wallet'}
+    {isLoading ? '⌳ Creating...' : '🅕 Create New Wallet'}
   </button>
   <button 
     onClick={startRestore} 
@@ -364,9 +398,9 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 3: Generate wallet */}
+        {/* Step 3: Generate wallet (with passphrase) */}
         {step === 3 && (
-          <div className="text-center fade-in">
+          <div className="fade-in">
             <div className="mb-6">
               <div 
                 style={{
@@ -377,18 +411,26 @@ export default function Onboarding() {
                 🔐
               </div>
               <p className="text-base text-secondary">
-                Perfect! Now we&apos;ll derive your wallet address from your verified seed phrase.
+                Set a passphrase to encrypt your secret phrase on this device. You&apos;ll need it to unlock your wallet.
               </p>
             </div>
+
+            <div className="space-y-3 mb-6">
+              <Input type="password" placeholder="Passphrase (min 8 chars)" value={createPassphrase} onChange={(e) => setCreatePassphrase(e.target.value)} />
+              <Input type="password" placeholder="Confirm passphrase" value={createPassphraseConfirm} onChange={(e) => setCreatePassphraseConfirm(e.target.value)} />
+              {createPassError && <p className="text-red-500 text-sm">{createPassError}</p>}
+            </div>
             
-            <button 
-              onClick={complete} 
-              className="btn-primary"
-              disabled={isLoading}
-              style={{ minWidth: '200px' }}
-            >
-              {isLoading ? '⏳ Generating...' : '🚀 Generate Wallet'}
-            </button>
+            <div className="text-center">
+              <button 
+                onClick={complete} 
+                className="btn-primary"
+                disabled={isLoading || !isCreatePassValid}
+                style={{ minWidth: '200px' }}
+              >
+                {isLoading ? '⌛ Generating...' : '🚀 Encrypt & Generate Wallet'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -466,15 +508,21 @@ export default function Onboarding() {
                 Separate each word with a space
               </p>
             </div>
+
+            <div className="space-y-3 mb-6">
+              <Input type="password" placeholder="Passphrase (min 8 chars)" value={restorePassphrase} onChange={(e) => setRestorePassphrase(e.target.value)} />
+              <Input type="password" placeholder="Confirm passphrase" value={restorePassphraseConfirm} onChange={(e) => setRestorePassphraseConfirm(e.target.value)} />
+              {restorePassError && <p className="text-red-500 text-sm">{restorePassError}</p>}
+            </div>
             
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
               <button 
                 onClick={restore} 
                 className="btn-primary"
-                disabled={isLoading || !inputMnemonic.trim()}
+                disabled={isLoading || !inputMnemonic.trim() || !isRestorePassValid}
                 style={{ flex: 1 }}
               >
-                {isLoading ? '⏳ Restoring...' : '🔄 Restore Wallet'}
+                {isLoading ? '⌛ Restoring...' : '🔄 Restore Wallet'}
               </button>
               <button 
                 onClick={() => setStep(0)} 

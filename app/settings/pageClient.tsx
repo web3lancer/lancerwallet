@@ -4,8 +4,6 @@ import ThemeSelector from "../components/ThemeSelector";
 import ProfileSettings from '../components/ProfileSettings';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Button from '../components/ui/Button';
 
 interface SettingToggle {
   id: string;
@@ -76,21 +74,32 @@ export default function SettingsPageClient() {
   ]);
 
   const [activeSection, setActiveSection] = useState<string>('general');
-   const [showResetModal, setShowResetModal] = useState(false);
-   const [showRevealModal, setShowRevealModal] = useState(false);
-   const [mnemonic, setMnemonic] = useState<string | null>(null);
-   const [askPassphrase, setAskPassphrase] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [showRevealModal, setShowRevealModal] = useState(false);
+  const [mnemonic, setMnemonic] = useState<string | null>(null);
 
-   // Reset reveal state when modal opens
-   React.useEffect(() => {
-     if (showRevealModal) {
-       setMnemonic(null);
-     }
-   }, [showRevealModal]);
+  // Reveal modal local state
+  const [revealPassphrase, setRevealPassphrase] = useState('');
+  const [revealError, setRevealError] = useState<string | null>(null);
 
+  // Restore flow: set passphrase for plaintext backup
+  const [showSetPassphraseModal, setShowSetPassphraseModal] = useState(false);
+  const [pendingMnemonic, setPendingMnemonic] = useState<string | null>(null);
+  const [setPassphrase, setSetPassphrase] = useState('');
+  const [setPassphraseConfirm, setSetPassphraseConfirm] = useState('');
+  const [setPassphraseError, setSetPassphraseError] = useState<string | null>(null);
+
+  // Reset reveal state when modal opens
+  React.useEffect(() => {
+    if (showRevealModal) {
+      setMnemonic(null);
+      setRevealPassphrase('');
+      setRevealError(null);
+    }
+  }, [showRevealModal]);
 
   const toggleSetting = (id: string) => {
-    setSettings(prev => prev.map(setting => 
+    setSettings(prev => prev.map(setting =>
       setting.id === id ? { ...setting, enabled: !setting.enabled } : setting
     ));
   };
@@ -113,7 +122,7 @@ export default function SettingsPageClient() {
     try {
       const wallets = JSON.parse(localStorage.getItem('wallets') || '[]');
       const enc = localStorage.getItem('mnemonic.enc');
-      
+
       if (!enc) {
         alert('No encrypted secret found. Please ensure you have created or imported a wallet.');
         return;
@@ -153,34 +162,27 @@ export default function SettingsPageClient() {
       reader.onload = (e) => {
         try {
           const backupData = JSON.parse(e.target?.result as string);
-          
+
           if ((!backupData.enc && !backupData.mnemonic) || !backupData.wallets) {
             throw new Error('Invalid backup file format');
           }
 
-          // Restore mnemonic (encrypted)
+          // Restore mnemonic (encrypted if present, otherwise ask user to set a passphrase)
           if (backupData.enc) {
             localStorage.setItem('mnemonic.enc', backupData.enc);
-          } else {
-            const passphrase = window.prompt('Set a passphrase to encrypt your seed (min 8 chars):') || '';
-            if (passphrase.length < 8) {
-              throw new Error('Passphrase must be at least 8 characters.');
-            }
-            import('../../lib/crypto').then(({ encryptWithPassphrase }) => {
-              const enc = encryptWithPassphrase({ mnemonic: backupData.mnemonic }, passphrase);
-              localStorage.setItem('mnemonic.enc', enc);
-            });
+          } else if (backupData.mnemonic) {
+            setPendingMnemonic(backupData.mnemonic);
+            setShowSetPassphraseModal(true);
           }
-          
-          // Restore wallets (they will be re-saved with current balances)
-          backupData.wallets.forEach((wallet: { address: string }) => {
-const existingWallets = JSON.parse(localStorage.getItem('wallets') || '[]');
-if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.address === wallet.address)) {
-              localStorage.setItem('wallets', JSON.stringify([...existingWallets, wallet]));
-            }
-          });
 
-          alert('Wallet restored successfully! Please refresh the page to see your restored wallets.');
+          // Restore wallets (dedupe by address)
+          const existingWallets = JSON.parse(localStorage.getItem('wallets') || '[]');
+          const toAdd = backupData.wallets.filter((w: { address: string }) => !existingWallets.find((ew: import('../../lib/wallet').WalletData) => ew.address === w.address));
+          if (toAdd.length) {
+            localStorage.setItem('wallets', JSON.stringify([...existingWallets, ...toAdd]));
+          }
+
+          alert('Backup processed. If a passphrase is required, please complete the passphrase step.');
         } catch (error) {
           console.error('Restore failed:', error);
           alert('Failed to restore wallet. Please check your backup file and try again.');
@@ -191,35 +193,81 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
     input.click();
   };
 
-   const handleLogout = () => {
-     // Clear wallet/account data (mnemonic.enc, session, etc.)
-     localStorage.removeItem('mnemonic.enc');
-     localStorage.removeItem('mnemonic'); // legacy cleanup
-     localStorage.removeItem('wallet');
-     localStorage.removeItem('session');
-     // Redirect to onboarding
-     window.location.href = '/onboarding';
-   };
+  const handleLogout = () => {
+    // Clear wallet/account data (mnemonic.enc, session, etc.)
+    localStorage.removeItem('mnemonic.enc');
+    localStorage.removeItem('mnemonic'); // legacy cleanup
+    localStorage.removeItem('wallet');
+    localStorage.removeItem('session');
+    // Redirect to onboarding
+    window.location.href = '/onboarding';
+  };
 
-   const handleReset = () => {
-     setShowResetModal(false);
-     // Clear all wallet/account data
-     localStorage.clear();
-     // Redirect to onboarding
-     window.location.href = '/onboarding';
-   };
+  const handleReset = () => {
+    setShowResetModal(false);
+    // Clear all wallet/account data
+    localStorage.clear();
+    // Redirect to onboarding
+    window.location.href = '/onboarding';
+  };
 
+  const handleRevealDecrypt = async () => {
+    try {
+      setRevealError(null);
+      setMnemonic(null);
+      const enc = localStorage.getItem('mnemonic.enc');
+      if (!enc) {
+        setRevealError('No encrypted secret found on this device.');
+        return;
+      }
+      const { decryptWithPassphrase } = await import('../../lib/crypto');
+      const data = decryptWithPassphrase<{ mnemonic: string }>(enc, revealPassphrase);
+      if (!data?.mnemonic) {
+        setRevealError('Incorrect passphrase.');
+        return;
+      }
+      setMnemonic(data.mnemonic);
+    } catch (e) {
+      console.error('Decrypt reveal failed', e);
+      setRevealError('Failed to decrypt.');
+    }
+  };
+
+  const handleSetPassphraseConfirm = async () => {
+    try {
+      setSetPassphraseError(null);
+      if (!pendingMnemonic) {
+        setShowSetPassphraseModal(false);
+        return;
+      }
+      if (setPassphrase.length < 8) {
+        setSetPassphraseError('Passphrase must be at least 8 characters.');
+        return;
+      }
+      if (setPassphrase !== setPassphraseConfirm) {
+        setSetPassphraseError('Passphrases do not match.');
+        return;
+      }
+      const { encryptWithPassphrase } = await import('../../lib/crypto');
+      const enc = encryptWithPassphrase({ mnemonic: pendingMnemonic }, setPassphrase);
+      localStorage.setItem('mnemonic.enc', enc);
+      setPendingMnemonic(null);
+      setSetPassphrase('');
+      setSetPassphraseConfirm('');
+      setShowSetPassphraseModal(false);
+      alert('Secret phrase encrypted and saved.');
+    } catch (e) {
+      console.error('Encrypt with passphrase failed', e);
+      setSetPassphraseError('Failed to save encrypted secret.');
+    }
+  };
 
   return (
     <div className="container fade-in" style={{ paddingBottom: 'var(--space-20)' }}>
       {/* Header */}
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-primary mb-2">
-          Settings
-        </h1>
-        <p className="text-base text-secondary">
-          Customize your wallet preferences and security settings
-        </p>
+        <h1 className="text-3xl font-bold text-primary mb-2">Settings</h1>
+        <p className="text-base text-secondary">Customize your wallet preferences and security settings</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -232,9 +280,7 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                 <button
                   key={section.id}
                   className={`w-full text-left px-3 py-2 rounded-md transition-all ${
-                    activeSection === section.id
-                      ? 'bg-purple-500 text-white'
-                      : 'text-secondary hover:bg-surface-hover'
+                    activeSection === section.id ? 'bg-purple-500 text-white' : 'text-secondary hover:bg-surface-hover'
                   }`}
                   onClick={() => setActiveSection(section.id)}
                   style={{
@@ -255,9 +301,7 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
         {/* Settings Content */}
         <main className="lg:col-span-3">
           {/* Profile Settings */}
-          {activeSection === 'profile' && (
-            <ProfileSettings />
-          )}
+          {activeSection === 'profile' && <ProfileSettings />}
 
           {/* General Settings */}
           {activeSection === 'general' && (
@@ -266,16 +310,12 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                 <h3 className="text-lg font-semibold text-primary mb-4">Appearance</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-secondary mb-2 block">
-                      Theme
-                    </label>
+                    <label className="text-sm font-medium text-secondary mb-2 block">Theme</label>
                     <ThemeSelector />
                   </div>
-                  
+
                   <div>
-                    <label className="text-sm font-medium text-secondary mb-2 block">
-                      Currency
-                    </label>
+                    <label className="text-sm font-medium text-secondary mb-2 block">Currency</label>
                     <select className="input" style={{ maxWidth: '200px' }}>
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
@@ -285,9 +325,7 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-secondary mb-2 block">
-                      Language
-                    </label>
+                    <label className="text-sm font-medium text-secondary mb-2 block">Language</label>
                     <select className="input" style={{ maxWidth: '200px' }}>
                       <option value="en">English</option>
                       <option value="es">Español</option>
@@ -302,9 +340,7 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                 <h3 className="text-lg font-semibold text-primary mb-4">Network</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-secondary mb-2 block">
-                      Default Network
-                    </label>
+                    <label className="text-sm font-medium text-secondary mb-2 block">Default Network</label>
                     <select className="input" style={{ maxWidth: '200px' }}>
                       <option value="ethereum">Ethereum Mainnet</option>
                       <option value="polygon">Polygon</option>
@@ -336,11 +372,9 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                           onChange={() => toggleSetting(setting.id)}
                           className="sr-only peer"
                         />
-                        <div 
+                        <div
                           className="w-11 h-6 rounded-full peer-checked:bg-purple-500 peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
-                          style={{
-                            background: setting.enabled ? 'var(--purple-500)' : 'var(--surface-pressed)'
-                          }}
+                          style={{ background: setting.enabled ? 'var(--purple-500)' : 'var(--surface-pressed)' }}
                         />
                       </label>
                     </div>
@@ -350,79 +384,31 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
 
               <div className="card">
                 <h3 className="text-lg font-semibold text-primary mb-4">Backup & Recovery</h3>
-                 <div className="space-y-4">
-                   <button 
-                     className="btn-secondary"
-                     onClick={handleBackup}
-                     style={{ width: '100%' }}
-                   >
-                     💾 Backup Wallet
-                   </button>
-                   <button 
-                     className="btn-secondary"
-                     onClick={handleRestore}
-                     style={{ width: '100%' }}
-                   >
-                     📥 Restore from Backup
-                   </button>
-                   <button 
-                     className="btn-secondary"
-                     onClick={() => setShowRevealModal(true)}
-                     style={{ width: '100%' }}
-                   >
-                     🔍 Reveal Secret Phrase
-                   </button>
-                   <button 
-                     className="btn-secondary"
-                     style={{ 
-                       width: '100%',
-                       background: 'rgba(244, 67, 54, 0.1)',
-                       borderColor: 'rgba(244, 67, 54, 0.2)',
-                       color: 'var(--error)'
-                     }}
-                     onClick={handleLogout}
-                   >
-                     🚪 Log Out
-                   </button>
-                   <button 
-                     className="btn-secondary"
-                     style={{ 
-                       width: '100%',
-                       background: 'rgba(244, 67, 54, 0.1)',
-                       borderColor: 'rgba(244, 67, 54, 0.2)',
-                       color: 'var(--error)'
-                     }}
-                     onClick={() => setShowResetModal(true)}
-                   >
-                     🗑️ Reset Wallet
-                   </button>
-                   <button 
-                     className="btn-secondary"
-                     onClick={handleRestore}
-                     style={{ width: '100%' }}
-                   >
-                     📥 Restore from Backup
-                   </button>
-                   <button 
-                     className="btn-secondary"
-                     onClick={() => setShowRevealModal(true)}
-                     style={{ width: '100%' }}
-                   >
-                     🔍 Reveal Secret Phrase
-                   </button>
-                   <button 
-                     className="btn-secondary"
-                     style={{ 
-                       width: '100%',
-                       background: 'rgba(244, 67, 54, 0.1)',
-                       borderColor: 'rgba(244, 67, 54, 0.2)',
-                       color: 'var(--error)'
-                     }}
-                     onClick={() => setShowResetModal(true)}
-                   >
-                     🗑️ Reset Wallet
-                   </button>
-                 </div>
+                <div className="space-y-4">
+                  <button className="btn-secondary" onClick={handleBackup} style={{ width: '100%' }}>
+                    💾 Backup Wallet
+                  </button>
+                  <button className="btn-secondary" onClick={handleRestore} style={{ width: '100%' }}>
+                    📥 Restore from Backup
+                  </button>
+                  <button className="btn-secondary" onClick={() => setShowRevealModal(true)} style={{ width: '100%' }}>
+                    🔍 Reveal Secret Phrase
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    style={{ width: '100%', background: 'rgba(244, 67, 54, 0.1)', borderColor: 'rgba(244, 67, 54, 0.2)', color: 'var(--error)' }}
+                    onClick={handleLogout}
+                  >
+                    🚪 Log Out
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    style={{ width: '100%', background: 'rgba(244, 67, 54, 0.1)', borderColor: 'rgba(244, 67, 54, 0.2)', color: 'var(--error)' }}
+                    onClick={() => setShowResetModal(true)}
+                  >
+                    🗑️ Reset Wallet
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -439,17 +425,10 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                       <p className="text-xs text-secondary">{setting.description}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={setting.enabled}
-                        onChange={() => toggleSetting(setting.id)}
-                        className="sr-only peer"
-                      />
-                      <div 
+                      <input type="checkbox" checked={setting.enabled} onChange={() => toggleSetting(setting.id)} className="sr-only peer" />
+                      <div
                         className="w-11 h-6 rounded-full peer-checked:bg-purple-500 peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
-                        style={{
-                          background: setting.enabled ? 'var(--purple-500)' : 'var(--surface-pressed)'
-                        }}
+                        style={{ background: setting.enabled ? 'var(--purple-500)' : 'var(--surface-pressed)' }}
                       />
                     </label>
                   </div>
@@ -470,17 +449,10 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                       <p className="text-xs text-secondary">{setting.description}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={setting.enabled}
-                        onChange={() => toggleSetting(setting.id)}
-                        className="sr-only peer"
-                      />
-                      <div 
+                      <input type="checkbox" checked={setting.enabled} onChange={() => toggleSetting(setting.id)} className="sr-only peer" />
+                      <div
                         className="w-11 h-6 rounded-full peer-checked:bg-purple-500 peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
-                        style={{
-                          background: setting.enabled ? 'var(--purple-500)' : 'var(--surface-pressed)'
-                        }}
+                        style={{ background: setting.enabled ? 'var(--purple-500)' : 'var(--surface-pressed)' }}
                       />
                     </label>
                   </div>
@@ -502,17 +474,10 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                         <p className="text-xs text-secondary">{setting.description}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={setting.enabled}
-                          onChange={() => toggleSetting(setting.id)}
-                          className="sr-only peer"
-                        />
-                        <div 
+                        <input type="checkbox" checked={setting.enabled} onChange={() => toggleSetting(setting.id)} className="sr-only peer" />
+                        <div
                           className="w-11 h-6 rounded-full peer-checked:bg-purple-500 peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
-                          style={{
-                            background: setting.enabled ? 'var(--purple-500)' : 'var(--surface-pressed)'
-                          }}
+                          style={{ background: setting.enabled ? 'var(--purple-500)' : 'var(--surface-pressed)' }}
                         />
                       </label>
                     </div>
@@ -524,9 +489,7 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
                 <h3 className="text-lg font-semibold text-primary mb-4">Gas Settings</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-secondary mb-2 block">
-                      Default Gas Price
-                    </label>
+                    <label className="text-sm font-medium text-secondary mb-2 block">Default Gas Price</label>
                     <select className="input" style={{ maxWidth: '200px' }}>
                       <option value="slow">Slow (Lower fees)</option>
                       <option value="standard">Standard</option>
@@ -593,77 +556,88 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
         </main>
       </div>
 
-       {/* Reveal Secret Phrase Modal */}
-       {showRevealModal && (
-         <div className="modal-overlay" onClick={() => setShowRevealModal(false)}>
-           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-             <h3 className="text-xl font-semibold text-primary mb-4">
-               🔍 Secret Phrase
-             </h3>
-             <p className="text-base text-secondary mb-6">
-               This is your wallet’s recovery phrase. Never share it with anyone. Anyone with access can control your funds.
-             </p>
-             <div className="p-4 mb-6 rounded-md" style={{ background: 'rgba(255, 152, 0, 0.1)', border: '1px solid rgba(255, 152, 0, 0.2)' }}>
-               <p className="text-sm font-medium" style={{ color: 'var(--warning)' }}>
-                 Write this down and store it securely. Do not take screenshots or store online.
-               </p>
-             </div>
-             <div className="p-6 mb-6" style={{ background: 'var(--surface-hover)', border: '2px solid var(--border-default)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-sm)', lineHeight: '1.8', wordSpacing: '8px', letterSpacing: '0.5px' }}>
-               {mnemonic ? mnemonic : <span className="text-secondary">No secret phrase found on this device.</span>}
-             </div>
-             <div className="flex gap-3">
-               <button className="btn-secondary" onClick={() => setShowRevealModal(false)} style={{ flex: 1 }}>
-                 Close
-               </button>
-             </div>
-           </div>
-         </div>
-       )}
+      {/* Reveal Secret Phrase Modal */}
+      {showRevealModal && (
+        <div className="modal-overlay" onClick={() => setShowRevealModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-semibold text-primary mb-4">🔍 Secret Phrase</h3>
+            <p className="text-base text-secondary mb-6">
+              This is your wallet’s recovery phrase. Never share it with anyone. Anyone with access can control your funds.
+            </p>
+            <div className="p-4 mb-6 rounded-md" style={{ background: 'rgba(255, 152, 0, 0.1)', border: '1px solid rgba(255, 152, 0, 0.2)' }}>
+              <p className="text-sm font-medium" style={{ color: 'var(--warning)' }}>
+                Write this down and store it securely. Do not take screenshots or store online.
+              </p>
+            </div>
 
-       {/* Reset Confirmation Modal */}
-       {showResetModal && (
-         <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
-           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-             <h3 className="text-xl font-semibold text-primary mb-4">
-               ⚠️ Reset Wallet
-             </h3>
-             <p className="text-base text-secondary mb-6">
-               This will permanently delete all wallet data from this device. Make sure you have backed up your seed phrases before proceeding.
-             </p>
-             <div 
-               className="p-4 mb-6 rounded-md"
-               style={{
-                 background: 'rgba(244, 67, 54, 0.1)',
-                 border: '1px solid rgba(244, 67, 54, 0.2)'
-               }}
-             >
-               <p className="text-sm font-medium" style={{ color: 'var(--error)' }}>
-                 This action cannot be undone!
-               </p>
-             </div>
-             <div className="flex gap-3">
-               <button 
-                 className="btn-secondary"
-                 onClick={() => setShowResetModal(false)}
-                 style={{ flex: 1 }}
-               >
-                 Cancel
-               </button>
-               <button 
-                 className="btn-primary"
-                 onClick={handleReset}
-                 style={{ 
-                   flex: 1,
-                   background: 'var(--error)',
-                   borderColor: 'var(--error)'
-                 }}
-               >
-                 Reset Wallet
-               </button>
-             </div>
-           </div>
-         </div>
-       )}
+            <div className="space-y-3 mb-6">
+              <Input type="password" placeholder="Passphrase" value={revealPassphrase} onChange={(e) => setRevealPassphrase(e.target.value)} />
+              <Button onClick={handleRevealDecrypt} disabled={revealPassphrase.length === 0}>Decrypt</Button>
+              {revealError && <p className="text-red-500 text-sm">{revealError}</p>}
+            </div>
+
+            <div className="p-6 mb-6" style={{ background: 'var(--surface-hover)', border: '2px solid var(--border-default)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-sm)', lineHeight: '1.8', wordSpacing: '8px', letterSpacing: '0.5px' }}>
+              {mnemonic ? mnemonic : <span className="text-secondary">Enter your passphrase to reveal your secret phrase.</span>}
+            </div>
+            <div className="flex gap-3">
+              <button className="btn-secondary" onClick={() => setShowRevealModal(false)} style={{ flex: 1 }}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Set Passphrase Modal (for restoring plaintext backups) */}
+      {showSetPassphraseModal && (
+        <div className="modal-overlay" onClick={() => setShowSetPassphraseModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-semibold text-primary mb-4">🔐 Set Passphrase</h3>
+            <p className="text-base text-secondary mb-6">Your backup contains an unencrypted secret phrase. Set a passphrase to encrypt and save it securely on this device.</p>
+            <div className="space-y-3 mb-6">
+              <Input type="password" placeholder="Passphrase (min 8 chars)" value={setPassphrase} onChange={(e) => setSetPassphrase(e.target.value)} />
+              <Input type="password" placeholder="Confirm passphrase" value={setPassphraseConfirm} onChange={(e) => setSetPassphraseConfirm(e.target.value)} />
+              {setPassphraseError && <p className="text-red-500 text-sm">{setPassphraseError}</p>}
+            </div>
+            <div className="flex gap-3">
+              <button className="btn-secondary" onClick={() => setShowSetPassphraseModal(false)} style={{ flex: 1 }}>
+                Cancel
+              </button>
+              <button className="btn-primary" onClick={handleSetPassphraseConfirm} style={{ flex: 1 }}>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Confirmation Modal */}
+      {showResetModal && (
+        <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-semibold text-primary mb-4">⚠️ Reset Wallet</h3>
+            <p className="text-base text-secondary mb-6">
+              This will permanently delete all wallet data from this device. Make sure you have backed up your seed phrases before proceeding.
+            </p>
+            <div
+              className="p-4 mb-6 rounded-md"
+              style={{ background: 'rgba(244, 67, 54, 0.1)', border: '1px solid rgba(244, 67, 54, 0.2)' }}
+            >
+              <p className="text-sm font-medium" style={{ color: 'var(--error)' }}>
+                This action cannot be undone!
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button className="btn-secondary" onClick={() => setShowResetModal(false)} style={{ flex: 1 }}>
+                Cancel
+              </button>
+              <button className="btn-primary" onClick={handleReset} style={{ flex: 1, background: 'var(--error)', borderColor: 'var(--error)' }}>
+                Reset Wallet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
