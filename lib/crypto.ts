@@ -96,39 +96,107 @@ export function decryptDataWithMnemonic<T>(combinedData: string, mnemonic: strin
 // --- Password-based Encryption for Local Storage ---
 
 /**
- * Encrypts data with a user-provided password.
- * Used for securing the wallet's seed phrase in local storage.
- * @param data The object to encrypt.
- * @param password The user's password.
- * @returns The encrypted data as a string.
+ * Basic AES(password) encryption. Kept for compatibility (e.g., passkey PRF usage).
  */
 export function encryptDataWithPassword(data: object, password: string): string {
-    if (!data || !password) {
-      throw new Error('Data and password are required for encryption.');
-    }
-    const dataString = JSON.stringify(data);
-    return CryptoJS.AES.encrypt(dataString, password).toString();
+  if (!data || !password) {
+    throw new Error('Data and password are required for encryption.');
+  }
+  const dataString = JSON.stringify(data);
+  return CryptoJS.AES.encrypt(dataString, password).toString();
 }
 
 /**
- * Decrypts data with a user-provided password.
- * @param encryptedData The encrypted data string.
- * @param password The user's password.
- * @returns The decrypted JavaScript object, or null if it fails.
+ * Basic AES(password) decryption. Kept for compatibility.
  */
 export function decryptDataWithPassword<T>(encryptedData: string, password: string): T | null {
-    if (!encryptedData || !password) {
-        throw new Error('Encrypted data and password are required for decryption.');
+  if (!encryptedData || !password) {
+    throw new Error('Encrypted data and password are required for decryption.');
+  }
+  try {
+    const bytes = CryptoJS.AES.decrypt(encryptedData, password);
+    const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
+    if (!decryptedString) {
+      return null;
     }
-    try {
-        const bytes = CryptoJS.AES.decrypt(encryptedData, password);
-        const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
-        if (!decryptedString) {
-            return null;
-        }
-        return JSON.parse(decryptedString) as T;
-    } catch (error) {
-        console.error('Password-based decryption failed:', error);
-        return null;
+    return JSON.parse(decryptedString) as T;
+  } catch (error) {
+    console.error('Password-based decryption failed:', error);
+    return null;
+  }
+}
+
+// --- Strengthened PBKDF2 + IV + Salt for local wallet secrets ---
+const PASS_KEY_SIZE = 256 / 32;
+const PASS_ITERATIONS = 100_000;
+
+function derivePasswordKey(password: string, salt: CryptoJS.lib.WordArray): CryptoJS.lib.WordArray {
+  return CryptoJS.PBKDF2(password, salt, {
+    keySize: PASS_KEY_SIZE,
+    iterations: PASS_ITERATIONS,
+    hasher: CryptoJS.algo.SHA256,
+  });
+}
+
+export interface EncryptedBlobV1 {
+  v: 1;
+  s: string; // base64 salt
+  iv: string; // base64 iv
+  ct: string; // base64 ciphertext
+}
+
+/**
+ * Encrypts data using PBKDF2(password+random salt) and random IV.
+ * Returns a compact JSON string suitable for storage.
+ */
+export function encryptWithPassphrase(data: object, passphrase: string): string {
+  if (!data || !passphrase) {
+    throw new Error('Data and passphrase are required for encryption.');
+  }
+  const salt = CryptoJS.lib.WordArray.random(16);
+  const key = derivePasswordKey(passphrase, salt);
+  const iv = CryptoJS.lib.WordArray.random(16);
+  const plaintext = JSON.stringify(data);
+  const encrypted = CryptoJS.AES.encrypt(plaintext, key, {
+    iv,
+    padding: CryptoJS.pad.Pkcs7,
+    mode: CryptoJS.mode.CBC,
+  });
+  const blob: EncryptedBlobV1 = {
+    v: 1,
+    s: CryptoJS.enc.Base64.stringify(salt),
+    iv: CryptoJS.enc.Base64.stringify(iv),
+    ct: encrypted.toString(),
+  };
+  return JSON.stringify(blob);
+}
+
+/**
+ * Decrypts data encrypted by encryptWithPassphrase.
+ */
+export function decryptWithPassphrase<T>(blobString: string, passphrase: string): T | null {
+  if (!blobString || !passphrase) {
+    throw new Error('Encrypted blob and passphrase are required for decryption.');
+  }
+  try {
+    const blob = JSON.parse(blobString) as EncryptedBlobV1;
+    if (blob.v !== 1 || !blob.s || !blob.iv || !blob.ct) {
+      console.error('Unsupported or invalid encrypted blob format');
+      return null;
     }
+    const salt = CryptoJS.enc.Base64.parse(blob.s);
+    const iv = CryptoJS.enc.Base64.parse(blob.iv);
+    const key = derivePasswordKey(passphrase, salt);
+    const decrypted = CryptoJS.AES.decrypt(blob.ct, key, {
+      iv,
+      padding: CryptoJS.pad.Pkcs7,
+      mode: CryptoJS.mode.CBC,
+    });
+    const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+    if (!plaintext) return null;
+    return JSON.parse(plaintext) as T;
+  } catch (e) {
+    console.error('decryptWithPassphrase failed:', e);
+    return null;
+  }
 }

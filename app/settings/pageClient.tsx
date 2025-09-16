@@ -2,6 +2,10 @@
 import React, { useState } from 'react';
 import ThemeSelector from "../components/ThemeSelector";
 import ProfileSettings from '../components/ProfileSettings';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 
 interface SettingToggle {
   id: string;
@@ -75,14 +79,12 @@ export default function SettingsPageClient() {
    const [showResetModal, setShowResetModal] = useState(false);
    const [showRevealModal, setShowRevealModal] = useState(false);
    const [mnemonic, setMnemonic] = useState<string | null>(null);
+   const [askPassphrase, setAskPassphrase] = useState(false);
 
-   // Load mnemonic from localStorage when reveal modal opens
+   // Reset reveal state when modal opens
    React.useEffect(() => {
      if (showRevealModal) {
-       try {
-         const m = localStorage.getItem('mnemonic');
-         setMnemonic(m);
-       } catch {}
+       setMnemonic(null);
      }
    }, [showRevealModal]);
 
@@ -110,18 +112,18 @@ export default function SettingsPageClient() {
   const handleBackup = () => {
     try {
       const wallets = JSON.parse(localStorage.getItem('wallets') || '[]');
-      const mnemonic = localStorage.getItem('mnemonic');
+      const enc = localStorage.getItem('mnemonic.enc');
       
-      if (!mnemonic) {
-        alert('No backup data found. Please ensure you have created or imported a wallet.');
+      if (!enc) {
+        alert('No encrypted secret found. Please ensure you have created or imported a wallet.');
         return;
       }
 
       const backupData = {
-        mnemonic,
+        enc,
         wallets: wallets.map((w: import('../../lib/wallet').WalletData) => ({ ...w, privateKey: undefined })), // Remove private keys for security
         timestamp: new Date().toISOString(),
-        version: '1.0'
+        version: '2.0'
       };
 
       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -152,12 +154,23 @@ export default function SettingsPageClient() {
         try {
           const backupData = JSON.parse(e.target?.result as string);
           
-          if (!backupData.mnemonic || !backupData.wallets) {
+          if ((!backupData.enc && !backupData.mnemonic) || !backupData.wallets) {
             throw new Error('Invalid backup file format');
           }
 
-          // Restore mnemonic
-          localStorage.setItem('mnemonic', backupData.mnemonic);
+          // Restore mnemonic (encrypted)
+          if (backupData.enc) {
+            localStorage.setItem('mnemonic.enc', backupData.enc);
+          } else {
+            const passphrase = window.prompt('Set a passphrase to encrypt your seed (min 8 chars):') || '';
+            if (passphrase.length < 8) {
+              throw new Error('Passphrase must be at least 8 characters.');
+            }
+            import('../../lib/crypto').then(({ encryptWithPassphrase }) => {
+              const enc = encryptWithPassphrase({ mnemonic: backupData.mnemonic }, passphrase);
+              localStorage.setItem('mnemonic.enc', enc);
+            });
+          }
           
           // Restore wallets (they will be re-saved with current balances)
           backupData.wallets.forEach((wallet: { address: string }) => {
@@ -179,8 +192,9 @@ if (!existingWallets.find((w: import('../../lib/wallet').WalletData) => w.addres
   };
 
    const handleLogout = () => {
-     // Clear wallet/account data (mnemonic, session, etc.)
-     localStorage.removeItem('mnemonic');
+     // Clear wallet/account data (mnemonic.enc, session, etc.)
+     localStorage.removeItem('mnemonic.enc');
+     localStorage.removeItem('mnemonic'); // legacy cleanup
      localStorage.removeItem('wallet');
      localStorage.removeItem('session');
      // Redirect to onboarding

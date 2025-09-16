@@ -1,77 +1,65 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
 import { sendTransaction } from '@/lib/wallet';
 import { ethers } from 'ethers';
 import Button from '@/app/components/ui/Button';
 import Input from '@/app/components/ui/Input';
 import Card from '@/app/components/ui/Card';
+import UnlockModal from '@/app/components/UnlockModal';
 import { createTransactionAction } from './actions';
 import { ID } from 'appwrite';
 
 export default function SendPageClient() {
-  const searchParams = useSearchParams();
-  const { wallets, password } = useStore();
-  
-  const [selectedWalletAddress, setSelectedWalletAddress] = useState('');
+  const { activeWallet, isLocked, user } = useStore();
+
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string>('');
   const [step, setStep] = useState<'form' | 'success'>('form');
-
-  useEffect(() => {
-    const defaultWalletAddress = searchParams.get('wallet');
-    if (defaultWalletAddress && wallets.some(w => w.address === defaultWalletAddress)) {
-      setSelectedWalletAddress(defaultWalletAddress);
-    } else if (wallets.length > 0) {
-      setSelectedWalletAddress(wallets[0].address);
-    }
-  }, [wallets, searchParams]);
-
-  const selectedWallet = wallets.find(w => w.address === selectedWalletAddress);
+  const [showUnlock, setShowUnlock] = useState(false);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!selectedWallet || !password) {
-      setError('Please select a wallet and ensure it is unlocked.');
+    if (!activeWallet || isLocked) {
+      setError('Please unlock your wallet first.');
+      setShowUnlock(true);
       return;
     }
     if (!ethers.isAddress(recipient)) {
       setError('Invalid recipient address.');
       return;
     }
-    if (parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(selectedWallet.balance)) {
-      setError('Invalid amount or insufficient balance.');
+    if (parseFloat(amount) <= 0) {
+      setError('Enter a valid amount.');
       return;
     }
 
     setIsLoading(true);
     try {
       const hash = await sendTransaction(
-        selectedWallet.privateKey!,
+        activeWallet.privateKey!,
         recipient,
         amount,
-        selectedWallet.network
+        activeWallet.network
       );
       setTxHash(hash);
 
-      if (useStore.getState().user) {
+      if (user) {
         await createTransactionAction({
           transactionId: ID.unique(),
-          userId: useStore.getState().user!.$id,
-          walletId: selectedWallet.address,
+          userId: user.$id,
+          walletId: activeWallet.address,
           hash,
-          fromAddress: selectedWallet.address,
+          fromAddress: activeWallet.address,
           toAddress: recipient,
           value: amount,
-          network: selectedWallet.network,
+          network: activeWallet.network,
           status: 'completed',
           type: 'send',
           timestamp: new Date().toISOString(),
@@ -87,16 +75,15 @@ export default function SendPageClient() {
     }
   };
 
-  if (!password) {
+  if (isLocked || !activeWallet) {
     return (
       <div className="container mx-auto p-4 text-center">
         <Card className="max-w-lg mx-auto p-8">
-          <h1 className="text-2xl font-bold mb-2">Wallets Locked</h1>
-          <p className="mb-4 text-gray-500">Please unlock your wallets to send transactions.</p>
-          <Link href="/wallets">
-            <Button>Unlock Wallets</Button>
-          </Link>
+          <h1 className="text-2xl font-bold mb-2">Wallet Locked</h1>
+          <p className="mb-4 text-gray-500">Unlock your wallet to send transactions.</p>
+          <Button onClick={() => setShowUnlock(true)}>Unlock Wallet</Button>
         </Card>
+        <UnlockModal isOpen={showUnlock} onClose={() => setShowUnlock(false)} />
       </div>
     );
   }
@@ -122,21 +109,14 @@ export default function SendPageClient() {
       <Card className="p-6">
         <form onSubmit={handleSend} className="space-y-4">
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-          
+
           <div>
-            <label htmlFor="wallet" className="block text-sm font-medium text-gray-700 dark:text-gray-300">From Wallet</label>
-            <select
-              id="wallet"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600"
-              value={selectedWalletAddress}
-              onChange={(e) => setSelectedWalletAddress(e.target.value)}
-            >
-              {wallets.map(w => (
-                <option key={w.address} value={w.address}>
-                  {w.name} ({parseFloat(w.balance).toFixed(4)} ETH)
-                </option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">From Wallet</label>
+            <Input
+              type="text"
+              value={`${activeWallet.name} (${activeWallet.address.slice(0, 6)}...${activeWallet.address.slice(-4)})`}
+              disabled
+            />
           </div>
 
           <div>
@@ -168,6 +148,7 @@ export default function SendPageClient() {
           </Button>
         </form>
       </Card>
+      <UnlockModal isOpen={showUnlock} onClose={() => setShowUnlock(false)} />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Logo from '../components/Logo';
 import { generateMnemonic, validateMnemonic, createWalletFromMnemonic, saveWalletToLocal } from '../../lib/wallet';
+import { encryptWithPassphrase } from '../../lib/crypto';
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
@@ -46,7 +47,12 @@ export default function Onboarding() {
       saveWalletToLocal(wallet);
       
       // Save mnemonic to localStorage for this session
-      localStorage.setItem('mnemonic', mnemonic);
+      const passphrase = window.prompt('Set a passphrase to encrypt your seed (min 8 chars):') || '';
+      if (passphrase.length < 8) {
+        throw new Error('Passphrase must be at least 8 characters.');
+      }
+      const enc = encryptWithPassphrase({ mnemonic }, passphrase);
+      localStorage.setItem('mnemonic.enc', enc);
       
       setRestoredAddress(wallet.address);
       setStep(4);
@@ -81,7 +87,12 @@ export default function Onboarding() {
       saveWalletToLocal(wallet);
       
       // Save mnemonic to localStorage for this session
-      localStorage.setItem('mnemonic', inputMnemonic);
+      const passphrase = window.prompt('Enter a passphrase to encrypt your seed (min 8 chars):') || '';
+      if (passphrase.length < 8) {
+        throw new Error('Passphrase must be at least 8 characters.');
+      }
+      const enc = encryptWithPassphrase({ mnemonic: inputMnemonic }, passphrase);
+      localStorage.setItem('mnemonic.enc', enc);
       
       setRestoredAddress(wallet.address);
       setStep(11);

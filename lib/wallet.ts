@@ -13,7 +13,7 @@ export interface WalletData {
   network: string;
   balance?: string;
   balanceUSD?: number;
-  privateKey: string; // Make this required
+  privateKey?: string; // Optional; kept in-memory only
   mnemonic?: string; // Mnemonic is sensitive, should be optional and handled with care
 }
 

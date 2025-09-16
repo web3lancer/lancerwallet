@@ -25,7 +25,31 @@ export default function SessionProvider({ children }: { children: React.ReactNod
       }
     };
 
+    // Legacy migration: if 'mnemonic' exists and 'mnemonic.enc' is missing, prompt user to set passphrase and migrate.
+    const migrateLegacyMnemonic = async () => {
+      try {
+        if (typeof window === 'undefined') return;
+        const legacy = localStorage.getItem('mnemonic');
+        const enc = localStorage.getItem('mnemonic.enc');
+        if (legacy && !enc) {
+          const passphrase = window.prompt('Set a passphrase to encrypt your seed (min 8 chars):') || '';
+          if (passphrase.length < 8) {
+            alert('Passphrase must be at least 8 characters. You can migrate later from Settings.');
+            return;
+          }
+          const { encryptWithPassphrase } = await import('@/lib/crypto');
+          const encrypted = encryptWithPassphrase({ mnemonic: legacy }, passphrase);
+          localStorage.setItem('mnemonic.enc', encrypted);
+          localStorage.removeItem('mnemonic');
+          alert('Your secret phrase has been encrypted and migrated securely.');
+        }
+      } catch (e) {
+        console.error('Legacy mnemonic migration failed:', e);
+      }
+    };
+
     checkUser();
+    migrateLegacyMnemonic();
   }, [setUser]);
 
   if (isLoading) {
