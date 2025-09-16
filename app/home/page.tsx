@@ -1,31 +1,49 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
 import Link from 'next/link';
 import Button from '@/app/components/ui/Button';
 import Card from '@/app/components/ui/Card';
+import UnlockModal from '@/app/components/UnlockModal';
 
 export default function HomePage() {
-  const { user, wallets, password } = useStore();
+  const { user, activeWallet, isLocked } = useStore();
+  const [showUnlock, setShowUnlock] = useState(false);
 
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-  if (!password) {
+  // Locked or no wallet state
+  if (isLocked || !activeWallet) {
     return (
       <div className="container mx-auto p-4 text-center">
         <Card className="max-w-lg mx-auto p-8">
           <h1 className="text-2xl font-bold mb-2">Welcome, {user?.name || 'User'}!</h1>
-          <p className="mb-4 text-gray-500">Your wallets are currently locked.</p>
-          <Link href="/wallets">
-            <Button>Unlock Wallets</Button>
-          </Link>
+          <p className="mb-4 text-gray-500">
+            {isLocked ? 'Your wallet is currently locked.' : 'No wallet found. Create or restore one to continue.'}
+          </p>
+          <div className="flex gap-3 justify-center">
+            {isLocked ? (
+              <Button onClick={() => setShowUnlock(true)}>Unlock Wallet</Button>
+            ) : (
+              <>
+                <Link href="/onboarding">
+                  <Button>Create/Restore</Button>
+                </Link>
+                <Link href="/wallets">
+                  <Button variant="secondary">View Wallet</Button>
+                </Link>
+              </>
+            )}
+          </div>
         </Card>
+        <UnlockModal isOpen={showUnlock} onClose={() => setShowUnlock(false)} />
       </div>
     );
   }
 
-  const totalPortfolioValue = wallets.reduce((sum, wallet) => sum + wallet.balanceUSD, 0);
+  const totalPortfolioValue = activeWallet.balanceUSD || 0;
 
   return (
     <div className="container mx-auto p-4">
@@ -44,7 +62,7 @@ export default function HomePage() {
         {/* Wallet Count */}
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-gray-500 mb-2">Total Wallets</h2>
-          <p className="text-4xl font-bold">{wallets.length}</p>
+          <p className="text-4xl font-bold">{activeWallet ? 1 : 0}</p>
         </Card>
 
         {/* Quick Actions */}
@@ -55,34 +73,26 @@ export default function HomePage() {
               <Button>⬆️ Send</Button>
             </Link>
             <Link href="/wallets">
-              <Button variant="secondary">👛 Wallets</Button>
+              <Button variant="secondary">👜 Wallet</Button>
             </Link>
           </div>
         </Card>
       </div>
 
-      {/* Recent Wallets List */}
+      {/* Active Wallet Summary */}
       <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Your Wallets</h2>
-        {wallets.length > 0 ? (
-          <Card className="p-4">
-            <ul>
-              {wallets.slice(0, 5).map(wallet => (
-                <li key={wallet.address} className="flex justify-between items-center p-2 border-b last:border-b-0">
-                  <div>
-                    <p className="font-semibold">{wallet.name}</p>
-                    <p className="text-sm text-gray-500 font-mono">{`${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`}</p>
-                  </div>
-                  <p className="font-semibold">{formatCurrency(wallet.balanceUSD)}</p>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        ) : (
-          <Card className="text-center p-8">
-            <p>No wallets found. Go to the Wallets page to create one.</p>
-          </Card>
-        )}
+        <h2 className="text-2xl font-bold mb-4">Your Wallet</h2>
+        <Card className="p-4">
+          <ul>
+            <li className="flex justify-between items-center p-2">
+              <div>
+                <p className="font-semibold">{activeWallet.name}</p>
+                <p className="text-sm text-gray-500 font-mono">{`${activeWallet.address.slice(0, 6)}...${activeWallet.address.slice(-4)}`}</p>
+              </div>
+              <p className="font-semibold">{formatCurrency(activeWallet.balanceUSD || 0)}</p>
+            </li>
+          </ul>
+        </Card>
       </div>
     </div>
   );
